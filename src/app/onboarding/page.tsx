@@ -101,7 +101,7 @@ export default function OnboardingPage() {
 				name,
 				email: user.email!,
 				crossfit_id: crossfitId,
-				division,
+				athlete_division: division,
 			});
 
 			if (athleteError) throw athleteError;
