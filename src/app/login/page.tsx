@@ -50,32 +50,33 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div className="min-h-screen flex flex-col bg-white">
+		<div className="min-h-screen flex flex-col bg-white relative">
 			{/* Hero Section */}
 			<div className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-[url('/images/slider-banner.jpg')] bg-cover bg-center">
 				<div className="absolute inset-0 bg-black/50" />
 				<div className="relative z-10 flex flex-col items-center text-center">
+					<div className="bg-white h-fit w-fit px-4 pb-4 rounded-lg mb-4">
+							<Image
+								src="/images/bcf-logo.png"
+								alt="Boise CrossFit"
+								width={300}
+								height={75}
+								className="mt-8"
+						/>
+					</div>
 					<h1 className="text-5xl md:text-7xl font-bold mb-4 text-white">
 						WE OPEN TOGETHER
 					</h1>
 					<p className="text-xl md:text-2xl mb-8 text-white">
 						Boise CrossFit 2025 Open
 					</p>
-					<div className="bg-white h-fit w-fit px-4 pb-4 rounded-lg">
-						<Image
-							src="/images/bcf-logo.png"
-							alt="Boise CrossFit"
-							width={300}
-							height={75}
-							className="mt-8"
-						/>
-					</div>
+					
 				</div>
 			</div>
 
 			{/* Login Form */}
 			<div className="flex-1 flex items-center justify-center px-4 bg-white">
-				<Card className="w-full max-w-md border-gray-200 -mt-60 z-10">
+				<Card className="w-full max-w-md border-gray-200 -mt-36 z-10">
 					<CardHeader>
 						<CardTitle>Sign In</CardTitle>
 						<CardDescription>
