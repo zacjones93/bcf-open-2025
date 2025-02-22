@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const athleteId = searchParams.get('athlete_id')
     const workoutId = searchParams.get('workout_id')
 
-    const supabase = createClient()
+    const supabase = await createServerClient()
     let query = supabase
       .from('athlete_points')
       .select(`
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient()
+    const supabase = await createServerClient()
     const body = await request.json()
 
     // Validate required fields
