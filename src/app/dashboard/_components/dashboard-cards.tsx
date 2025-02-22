@@ -2,14 +2,12 @@ import { createServerClient } from "@/lib/supabase/server";
 import {
 	Card,
 	CardContent,
-	CardDescription,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
 import { TeamPointsChart } from "./team-points-chart";
 import { WorkoutCompletionCharts } from "./workout-completion-charts";
 import { TopAthletesCard } from "./top-athletes-card";
-import type { Database } from "@/types/database.types";
 
 interface TeamWithAthletes {
 	id: string;

@@ -210,7 +210,7 @@ export default function OnboardingPage() {
 								</SelectContent>
 							</Select>
 							<p className="text-sm text-muted-foreground">
-								Select the division you'll be competing in for the Open
+								Select the division you&apos;ll be competing in for the Open
 							</p>
 						</div>
 						<div className="space-y-2">

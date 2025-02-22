@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import type { Database } from "@/types/database.types";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";

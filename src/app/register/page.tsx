@@ -80,8 +80,8 @@ export default function RegisterPage() {
 							</p>
 						</div>
 						<p className="text-sm text-gray-600">
-							Once verified, you'll be able to sign in and set up your athlete
-							profile.
+							Once verified, you&apos;ll be able to sign in and set up your
+							athlete profile.
 						</p>
 					</CardContent>
 					<CardFooter>
@@ -179,12 +179,12 @@ export default function RegisterPage() {
 				<div className="absolute inset-0 bg-black/50" />
 				<div className="relative z-10 flex flex-col items-center text-center">
 					<div className="bg-white h-fit w-fit px-4 pb-4 rounded-lg mb-4">
-							<Image
-								src="/images/bcf-logo.png"
-								alt="Boise CrossFit"
-								width={300}
-								height={75}
-								className="mt-8"
+						<Image
+							src="/images/bcf-logo.png"
+							alt="Boise CrossFit"
+							width={300}
+							height={75}
+							className="mt-8"
 						/>
 					</div>
 					<h1 className="text-5xl md:text-7xl font-bold mb-4 text-white">
@@ -193,7 +193,6 @@ export default function RegisterPage() {
 					<p className="text-xl md:text-2xl mb-8 text-white">
 						Boise CrossFit 2025 Open
 					</p>
-					
 				</div>
 			</div>
 

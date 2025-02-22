@@ -1,10 +1,6 @@
 "use client";
 
-import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
-import { Button } from "@/components/ui/button";
-
 export function DashboardHeader() {
-	const { user, signOut } = useSupabaseAuth();
 
 	return (
 		<div className="flex items-center justify-between">
