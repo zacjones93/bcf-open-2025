@@ -76,7 +76,7 @@ export default function LoginPage() {
 
 			{/* Login Form */}
 			<div className="flex-1 flex items-center justify-center px-4 bg-white">
-				<Card className="w-full max-w-md border-gray-200 -mt-36 z-10">
+				<Card className="w-full max-w-md border-gray-200 -mt-12 z-10">
 					<CardHeader>
 						<CardTitle>Sign In</CardTitle>
 						<CardDescription>
@@ -136,6 +136,7 @@ export default function LoginPage() {
 					</form>
 				</Card>
 			</div>
+			<div className="min-h-[20vh]"></div>
 		</div>
 	);
 }

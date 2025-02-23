@@ -200,6 +200,8 @@ export default function RegisterPage() {
 			<div className="flex-1 flex items-center justify-center px-4 bg-white">
 				{renderContent()}
 			</div>
+
+			<div className="min-h-[20vh]"></div>
 		</div>
 	);
 }
