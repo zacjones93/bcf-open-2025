@@ -6,8 +6,49 @@ import { SupabaseAuthProvider } from "@/components/providers/supabase-auth-provi
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+	metadataBase: new URL("https://boisecrossfitopen.online"),
 	title: "BCF Open 2025",
 	description: "Track points for the BCF Open 2025 competition",
+	authors: [{ name: "Boise CrossFit" }],
+	openGraph: {
+		title: "BCF Open 2025",
+		description: "Boise CrossFit&apos;s in-house Open 2025 competition",
+		url: "https://boisecrossfitopen.online",
+		siteName: "BCF Open 2025",
+		images: [
+			{
+				url: "/images/og-image.png",
+				width: 1200,
+				height: 630,
+				alt: "BCF Open 2025",
+			},
+		],
+		locale: "en_US",
+		type: "website",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "BCF Open 2025",
+		description: "Boise CrossFit&apos;s in-house Open 2025 competition",
+		images: ["/images/og-image.png"],
+	},
+	icons: {
+		icon: [
+			{ url: "/favicon.ico", sizes: "32x32" },
+			{ url: "/favicon.svg", type: "image/svg+xml" },
+			{ url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+		],
+		apple: [
+			{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+		],
+		other: [
+			{
+				rel: "mask-icon",
+				url: "/favicon.svg",
+			},
+		],
+	},
+	manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
