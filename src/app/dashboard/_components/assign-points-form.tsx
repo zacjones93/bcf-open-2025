@@ -36,10 +36,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Athlete {
 	id: string;
 	name: string;
+	athlete_teams: Array<{
+		team: {
+			id: string;
+			name: string;
+		} | null;
+	}>;
 }
 
 interface PointType {
@@ -61,21 +68,35 @@ export function AssignPointsForm() {
 	const [athletes, setAthletes] = useState<Athlete[]>([]);
 	const [pointTypes, setPointTypes] = useState<PointType[]>([]);
 	const [workouts, setWorkouts] = useState<Workout[]>([]);
-	const [selectedAthlete, setSelectedAthlete] = useState("");
-	const [selectedPointType, setSelectedPointType] = useState("");
+	const [selectedAthletes, setSelectedAthletes] = useState<string[]>([]);
+	const [selectedPointTypes, setSelectedPointTypes] = useState<string[]>([]);
 	const [selectedWorkout, setSelectedWorkout] = useState("");
+	const [selectedTeam, setSelectedTeam] = useState<string>("all");
 	const [notes, setNotes] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const [athleteSearchOpen, setAthleteSearchOpen] = useState(false);
 	const supabase = createClient();
 
 	useEffect(() => {
 		async function fetchData() {
 			const [athletesResponse, pointTypesResponse, workoutsResponse] =
 				await Promise.all([
-					supabase.from("athletes").select("id, name").order("name"),
+					supabase
+						.from("athletes")
+						.select(
+							`
+						id, 
+						name,
+						athlete_teams!inner (
+							team:teams(
+								id,
+								name
+							)
+						)
+					`
+						)
+						.order("name"),
 					supabase.from("point_types").select("*").order("category, name"),
 					supabase.from("workouts").select("*").order("week_number"),
 				]);
@@ -93,6 +114,24 @@ export function AssignPointsForm() {
 		fetchData();
 	}, [supabase]);
 
+	// Get unique teams from athletes
+	const teams = Array.from(
+		new Set(
+			athletes
+				.flatMap((athlete) =>
+					athlete.athlete_teams.map((at) => at.team?.name).filter(Boolean)
+				)
+				.filter((name): name is string => name !== undefined)
+		)
+	).sort();
+
+	// Filter athletes by selected team
+	const filteredAthletes = athletes.filter((athlete) =>
+		selectedTeam === "all"
+			? true
+			: athlete.athlete_teams.some((at) => at.team?.name === selectedTeam)
+	);
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading(true);
@@ -100,9 +139,6 @@ export function AssignPointsForm() {
 		setSuccess(false);
 
 		try {
-			const pointType = pointTypes.find((pt) => pt.id === selectedPointType);
-			if (!pointType) throw new Error("Invalid point type selected");
-
 			// Get current user's athlete ID
 			const { data: currentAthlete } = await supabase
 				.from("athletes")
@@ -112,41 +148,47 @@ export function AssignPointsForm() {
 
 			if (!currentAthlete) throw new Error("Athlete profile not found");
 
-			// Create point assignment record
-			const { data: pointAssignment, error: assignmentError } = await supabase
-				.from("point_assignments")
-				.insert({
+			// Create point assignments for each selected athlete and point type combination
+			const pointAssignments = selectedAthletes.flatMap((athleteId) =>
+				selectedPointTypes.map((pointTypeId) => ({
 					assigner_id: currentAthlete.id,
-					assignee_id: selectedAthlete,
-					point_type_id: selectedPointType,
+					assignee_id: athleteId,
+					point_type_id: pointTypeId,
 					workout_id: selectedWorkout || null,
-					points: pointType.points,
+					points: pointTypes.find((pt) => pt.id === pointTypeId)?.points || 0,
 					notes: notes || null,
-				})
-				.select()
-				.single();
+				}))
+			);
+
+			const { data: createdAssignments, error: assignmentError } =
+				await supabase
+					.from("point_assignments")
+					.insert(pointAssignments)
+					.select();
 
 			if (assignmentError) throw assignmentError;
-			if (!pointAssignment)
-				throw new Error("Failed to create point assignment");
+			if (!createdAssignments)
+				throw new Error("Failed to create point assignments");
 
-			// Create athlete points record
+			// Create athlete points records for each assignment
+			const athletePoints = createdAssignments.map((assignment) => ({
+				athlete_id: assignment.assignee_id,
+				point_type_id: assignment.point_type_id,
+				workout_id: selectedWorkout || null,
+				points: assignment.points,
+				notes: notes || null,
+				point_assignment_id: assignment.id,
+			}));
+
 			const { error: pointsError } = await supabase
 				.from("athlete_points")
-				.insert({
-					athlete_id: selectedAthlete,
-					point_type_id: selectedPointType,
-					workout_id: selectedWorkout || null,
-					points: pointType.points,
-					notes: notes || null,
-					point_assignment_id: pointAssignment.id,
-				});
+				.insert(athletePoints);
 
 			if (pointsError) throw pointsError;
 
 			setSuccess(true);
-			setSelectedAthlete("");
-			setSelectedPointType("");
+			setSelectedAthletes([]);
+			setSelectedPointTypes([]);
 			setSelectedWorkout("");
 			setNotes("");
 		} catch (error) {
@@ -168,7 +210,7 @@ export function AssignPointsForm() {
 				<CardHeader>
 					<CardTitle>Assign Points</CardTitle>
 					<CardDescription>
-						Award points to athletes for their achievements
+						Award points to multiple athletes for their achievements
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -187,85 +229,89 @@ export function AssignPointsForm() {
 						)}
 
 						<div className="space-y-2">
-							<Label htmlFor="athlete">Athlete</Label>
-							<Popover
-								open={athleteSearchOpen}
-								onOpenChange={setAthleteSearchOpen}
-							>
-								<PopoverTrigger asChild>
-									<Button
-										variant="outline"
-										role="combobox"
-										aria-expanded={athleteSearchOpen}
-										className="w-full justify-between"
-									>
-										{selectedAthlete
-											? athletes.find(
-													(athlete) => athlete.id === selectedAthlete
-											  )?.name
-											: "Select athlete..."}
-										<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-									</Button>
-								</PopoverTrigger>
-								<PopoverContent className="w-full p-0">
-									<Command>
-										<CommandInput placeholder="Search athletes..." />
-										<CommandEmpty>No athlete found.</CommandEmpty>
-										<CommandGroup>
-											{athletes.map((athlete) => (
-												<CommandItem
-													key={athlete.id}
-													onSelect={() => {
-														console.log("athlete.id", athlete.id);
-														setSelectedAthlete(athlete.id);
-														setAthleteSearchOpen(false);
-													}}
-													className="cursor-pointer"
-												>
-													<Check
-														className={cn(
-															"mr-2 h-4 w-4",
-															selectedAthlete === athlete.id
-																? "opacity-100"
-																: "opacity-0"
-														)}
-													/>
-													{athlete.name}
-												</CommandItem>
-											))}
-										</CommandGroup>
-									</Command>
-								</PopoverContent>
-							</Popover>
-						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="pointType">Point Type</Label>
-							<Select
-								value={selectedPointType}
-								onValueChange={setSelectedPointType}
-								required
-							>
+							<Label>Filter by Team</Label>
+							<Select value={selectedTeam} onValueChange={setSelectedTeam}>
 								<SelectTrigger>
-									<SelectValue placeholder="Select point type" />
+									<SelectValue placeholder="Select team..." />
 								</SelectTrigger>
 								<SelectContent>
-									{["weekly", "one_time", "performance"].map((category) => (
-										<div key={category} className="p-2">
-											<h4 className="mb-2 font-semibold capitalize">
-												{category.replace("_", " ")}
-											</h4>
-											{pointTypes
-												.filter((pt) => pt.category === category)
-												.map((pointType) => (
-													<SelectItem key={pointType.id} value={pointType.id}>
-														{pointType.name} ({pointType.points} points)
-													</SelectItem>
-												))}
-										</div>
+									<SelectItem value="all">All Teams</SelectItem>
+									{teams.map((team) => (
+										<SelectItem key={team} value={team}>
+											{team}
+										</SelectItem>
 									))}
 								</SelectContent>
 							</Select>
+						</div>
+
+						<div className="space-y-2">
+							<Label>Athletes</Label>
+							<div className="space-y-2 border rounded-md p-4 max-h-[200px] overflow-y-auto">
+								{filteredAthletes.map((athlete) => (
+									<div key={athlete.id} className="flex items-center space-x-2">
+										<Checkbox
+											id={`athlete-${athlete.id}`}
+											checked={selectedAthletes.includes(athlete.id)}
+											onCheckedChange={(checked: boolean) => {
+												setSelectedAthletes(
+													checked
+														? [...selectedAthletes, athlete.id]
+														: selectedAthletes.filter((id) => id !== athlete.id)
+												);
+											}}
+										/>
+										<Label
+											htmlFor={`athlete-${athlete.id}`}
+											className="cursor-pointer"
+										>
+											{athlete.name}
+										</Label>
+									</div>
+								))}
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<Label>Point Types</Label>
+							<div className="space-y-2 border rounded-md p-4">
+								{["weekly", "one_time", "performance"].map((category) => (
+									<div key={category} className="space-y-2">
+										<h4 className="font-semibold capitalize">
+											{category.replace("_", " ")}
+										</h4>
+										{pointTypes
+											.filter((pt) => pt.category === category)
+											.map((type) => (
+												<div
+													key={type.id}
+													className="flex items-center space-x-2 ml-4"
+												>
+													<Checkbox
+														id={`point-type-${type.id}`}
+														checked={selectedPointTypes.includes(type.id)}
+														onCheckedChange={(checked: boolean) => {
+															setSelectedPointTypes(
+																checked
+																	? [...selectedPointTypes, type.id]
+																	: selectedPointTypes.filter(
+																			(id) => id !== type.id
+																	  )
+															);
+														}}
+													/>
+													<Label
+														htmlFor={`point-type-${type.id}`}
+														className="cursor-pointer"
+													>
+														{type.name} ({type.points} point
+														{type.points !== 1 ? "s" : ""})
+													</Label>
+												</div>
+											))}
+									</div>
+								))}
+							</div>
 						</div>
 
 						<div className="space-y-2">
@@ -297,7 +343,15 @@ export function AssignPointsForm() {
 							/>
 						</div>
 
-						<Button type="submit" className="w-full" disabled={loading}>
+						<Button
+							type="submit"
+							className="w-full"
+							disabled={
+								loading ||
+								selectedAthletes.length === 0 ||
+								selectedPointTypes.length === 0
+							}
+						>
 							{loading ? "Assigning Points..." : "Assign Points"}
 						</Button>
 					</form>
