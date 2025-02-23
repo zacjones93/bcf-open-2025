@@ -15,6 +15,7 @@ export type Database = {
           created_at: string | null
           id: string
           notes: string | null
+          point_assignment_id: string | null
           point_type_id: string | null
           points: number
           updated_at: string | null
@@ -25,6 +26,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           notes?: string | null
+          point_assignment_id?: string | null
           point_type_id?: string | null
           points?: number
           updated_at?: string | null
@@ -35,6 +37,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           notes?: string | null
+          point_assignment_id?: string | null
           point_type_id?: string | null
           points?: number
           updated_at?: string | null
@@ -46,6 +49,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_points_point_assignment_id_fkey"
+            columns: ["point_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "point_assignments"
             referencedColumns: ["id"]
           },
           {
