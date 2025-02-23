@@ -80,8 +80,7 @@ export default function RegisterPage() {
 							</p>
 						</div>
 						<p className="text-sm text-gray-600">
-							Once verified, you&apos;ll be able to sign in and set up your
-							athlete profile.
+							You can now sign in and set up your athlete profile.
 						</p>
 					</CardContent>
 					<CardFooter>

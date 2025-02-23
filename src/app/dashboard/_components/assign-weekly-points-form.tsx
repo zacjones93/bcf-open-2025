@@ -48,7 +48,7 @@ export function AssignWeeklyPointsForm() {
 	const [athletes, setAthletes] = useState<Athlete[]>([]);
 	const [pointTypes, setPointTypes] = useState<PointType[]>([]);
 	const [workouts, setWorkouts] = useState<Workout[]>([]);
-	const [selectedAthlete, setSelectedAthlete] = useState("");
+	const [selectedAthletes, setSelectedAthletes] = useState<string[]>([]);
 	const [selectedPointTypes, setSelectedPointTypes] = useState<string[]>([]);
 	const [selectedWorkout, setSelectedWorkout] = useState("");
 	const [notes, setNotes] = useState("");
@@ -161,14 +161,16 @@ export function AssignWeeklyPointsForm() {
 				throw new Error("Captain profile not found");
 			}
 
-			// Create point assignments for each selected point type
-			const pointAssignments = selectedPointTypes.map((pointTypeId) => ({
-				assigner_id: captain.id,
-				assignee_id: selectedAthlete,
-				point_type_id: pointTypeId,
-				workout_id: selectedWorkout || null,
-				notes: notes || null,
-			}));
+			// Create point assignments for each selected athlete and point type combination
+			const pointAssignments = selectedAthletes.flatMap((athleteId) =>
+				selectedPointTypes.map((pointTypeId) => ({
+					assigner_id: captain.id,
+					assignee_id: athleteId,
+					point_type_id: pointTypeId,
+					workout_id: selectedWorkout || null,
+					notes: notes || null,
+				}))
+			);
 
 			const { data: createdAssignments, error: insertError } = await supabase
 				.from("point_assignments")
@@ -181,7 +183,7 @@ export function AssignWeeklyPointsForm() {
 
 			// Create athlete points records for each assignment
 			const athletePoints = createdAssignments.map((assignment) => ({
-				athlete_id: selectedAthlete,
+				athlete_id: assignment.assignee_id,
 				point_type_id: assignment.point_type_id,
 				workout_id: selectedWorkout || null,
 				points:
@@ -198,7 +200,7 @@ export function AssignWeeklyPointsForm() {
 			if (pointsError) throw pointsError;
 
 			setSuccess(true);
-			setSelectedAthlete("");
+			setSelectedAthletes([]);
 			setSelectedPointTypes([]);
 			setSelectedWorkout("");
 			setNotes("");
@@ -218,111 +220,125 @@ export function AssignWeeklyPointsForm() {
 
 	return (
 		<>
-			<h2 className="text-2xl font-bold tracking-tight">
-				Captain Actions
-			</h2>
+			<h2 className="text-2xl font-bold tracking-tight">Captain Actions</h2>
 			<Card className="max-w-2xl">
 				<CardHeader>
-				<CardTitle>Assign Weekly Points</CardTitle>
-				<CardDescription>
-					Award points for weekly achievements like judging, FNL attendance, or
-					PRs
-				</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<form onSubmit={handleSubmit} className="space-y-4">
-					{error && (
-						<Alert variant="destructive">
-							<AlertDescription>{error}</AlertDescription>
-						</Alert>
-					)}
-					{success && (
-						<Alert>
-							<AlertDescription>Points assigned successfully!</AlertDescription>
-						</Alert>
-					)}
+					<CardTitle>Assign Weekly Points</CardTitle>
+					<CardDescription>
+						Award points for weekly achievements like judging, FNL attendance,
+						or PRs
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form onSubmit={handleSubmit} className="space-y-4">
+						{error && (
+							<Alert variant="destructive">
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						)}
+						{success && (
+							<Alert>
+								<AlertDescription>
+									Points assigned successfully!
+								</AlertDescription>
+							</Alert>
+						)}
 
-					<div className="space-y-2">
-						<Label htmlFor="athlete">Athlete</Label>
-						<Select
-							value={selectedAthlete}
-							onValueChange={setSelectedAthlete}
-							required
-						>
-							<SelectTrigger>
-								<SelectValue placeholder="Select athlete..." />
-							</SelectTrigger>
-							<SelectContent>
+						<div className="space-y-2">
+							<Label>Athletes</Label>
+							<div className="space-y-2 border rounded-md p-4 max-h-[200px] overflow-y-auto">
 								{athletes.map((athlete) => (
-									<SelectItem key={athlete.id} value={athlete.id}>
-										{athlete.name}
-									</SelectItem>
+									<div key={athlete.id} className="flex items-center space-x-2">
+										<Checkbox
+											id={`athlete-${athlete.id}`}
+											checked={selectedAthletes.includes(athlete.id)}
+											onCheckedChange={(checked: boolean) => {
+												setSelectedAthletes(
+													checked
+														? [...selectedAthletes, athlete.id]
+														: selectedAthletes.filter((id) => id !== athlete.id)
+												);
+											}}
+										/>
+										<Label
+											htmlFor={`athlete-${athlete.id}`}
+											className="cursor-pointer"
+										>
+											{athlete.name}
+										</Label>
+									</div>
 								))}
-							</SelectContent>
-						</Select>
-					</div>
-
-					<div className="space-y-2">
-						<Label>Point Types</Label>
-						<div className="space-y-2 border rounded-md p-4">
-							{pointTypes.map((type) => (
-								<div key={type.id} className="flex items-center space-x-2">
-									<Checkbox
-										id={type.id}
-										checked={selectedPointTypes.includes(type.id)}
-										onCheckedChange={(checked: boolean) => {
-											setSelectedPointTypes(
-												checked
-													? [...selectedPointTypes, type.id]
-													: selectedPointTypes.filter((id) => id !== type.id)
-											);
-										}}
-									/>
-									<Label htmlFor={type.id} className="cursor-pointer">
-										{type.name} ({type.points} point
-										{type.points !== 1 ? "s" : ""})
-									</Label>
-								</div>
-							))}
+							</div>
 						</div>
-					</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="workout">Workout</Label>
-						<Select value={selectedWorkout} onValueChange={setSelectedWorkout}>
-							<SelectTrigger>
-								<SelectValue placeholder="Select workout..." />
-							</SelectTrigger>
-							<SelectContent>
-								{workouts.map((workout) => (
-									<SelectItem key={workout.id} value={workout.id}>
-										{workout.name}
-									</SelectItem>
+						<div className="space-y-2">
+							<Label>Point Types</Label>
+							<div className="space-y-2 border rounded-md p-4">
+								{pointTypes.map((type) => (
+									<div key={type.id} className="flex items-center space-x-2">
+										<Checkbox
+											id={type.id}
+											checked={selectedPointTypes.includes(type.id)}
+											onCheckedChange={(checked: boolean) => {
+												setSelectedPointTypes(
+													checked
+														? [...selectedPointTypes, type.id]
+														: selectedPointTypes.filter((id) => id !== type.id)
+												);
+											}}
+										/>
+										<Label htmlFor={type.id} className="cursor-pointer">
+											{type.name} ({type.points} point
+											{type.points !== 1 ? "s" : ""})
+										</Label>
+									</div>
 								))}
-							</SelectContent>
-						</Select>
-					</div>
+							</div>
+						</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="notes">Notes (Optional)</Label>
-						<Textarea
-							id="notes"
-							value={notes}
-							onChange={(e) => setNotes(e.target.value)}
-							placeholder="Add any additional notes..."
-						/>
-					</div>
+						<div className="space-y-2">
+							<Label htmlFor="workout">Workout</Label>
+							<Select
+								value={selectedWorkout}
+								onValueChange={setSelectedWorkout}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Select workout..." />
+								</SelectTrigger>
+								<SelectContent>
+									{workouts.map((workout) => (
+										<SelectItem key={workout.id} value={workout.id}>
+											{workout.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
 
-					<Button
-						type="submit"
-						disabled={loading || selectedPointTypes.length === 0}
-						className="w-full"
-					>
-						{loading ? "Assigning Points..." : "Assign Points"}
-					</Button>
-				</form>
-			</CardContent>
-		</Card>
+						<div className="space-y-2">
+							<Label htmlFor="notes">Notes (Optional)</Label>
+							<Textarea
+								id="notes"
+								value={notes}
+								onChange={(e) => setNotes(e.target.value)}
+								placeholder="Add any additional notes..."
+							/>
+						</div>
+
+						<Button
+							type="submit"
+							disabled={
+								loading ||
+								selectedAthletes.length === 0 ||
+								selectedPointTypes.length === 0
+							}
+							className="w-full"
+						>
+							{loading ? "Assigning Points..." : "Assign Points"}
+						</Button>
+					</form>
+				</CardContent>
+			</Card>
 		</>
 	);
 }
