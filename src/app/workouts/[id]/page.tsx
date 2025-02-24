@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { Markdown } from "@/components/ui/markdown";
 
-export default async function WorkoutDetailsPage({
-	params,
-}: {
-	params: { id: string };
-}) {
+interface WorkoutPageProps {
+	params: {
+		id: string;
+	};
+}
+
+export default async function WorkoutDetailsPage({ params }: WorkoutPageProps) {
 	const supabase = await createServerClient();
 
 	const { data: workout } = await supabase

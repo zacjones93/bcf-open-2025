@@ -81,8 +81,6 @@ export async function TeamsList() {
 		.eq("athlete_teams.is_active", true)
 		.returns<TeamResponse[]>();
 
-	console.log({ teamsData });
-
 	if (!teamsData?.length) return null;
 
 	// Transform the data to match our TeamWithMembers type

@@ -111,8 +111,6 @@ export async function DashboardCards() {
 			) || null,
 	})) as WorkoutScore[] | null;
 
-	console.log("workoutScores", combinedScores);
-
 	// Calculate team points
 	const teamPoints = teams.map((team) => ({
 		name: team.name,
