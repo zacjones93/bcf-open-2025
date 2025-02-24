@@ -61,7 +61,7 @@ export default function DashboardPage() {
 											className="bg-[#dbff43] text-black hover:bg-[#dbff43]/90 font-semibold w-fit mx-auto"
 										>
 											<a
-												href="https://games.crossfit.com/workouts/open/2025"
+												href="https://games.crossfit.com/manage-competition/athlete"
 												target="_blank"
 												rel="noopener noreferrer"
 												className="flex items-center justify-center gap-2"

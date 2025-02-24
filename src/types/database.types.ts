@@ -323,8 +323,10 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          details: string | null
           id: string
           name: string
+          standards_and_score_link: string | null
           updated_at: string | null
           week_number: number
           workout_date: string
@@ -332,8 +334,10 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          details?: string | null
           id?: string
           name: string
+          standards_and_score_link?: string | null
           updated_at?: string | null
           week_number: number
           workout_date: string
@@ -341,8 +345,10 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          details?: string | null
           id?: string
           name?: string
+          standards_and_score_link?: string | null
           updated_at?: string | null
           week_number?: number
           workout_date?: string

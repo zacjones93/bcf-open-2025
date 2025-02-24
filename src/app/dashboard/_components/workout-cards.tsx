@@ -1,6 +1,9 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Database } from "@/types/database.types";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Workout = Database["public"]["Tables"]["workouts"]["Row"];
 
@@ -52,24 +55,60 @@ export async function WorkoutCards() {
 
 	return (
 		<div className="grid gap-4 md:grid-cols-3">
-			{mergedWorkouts.map((workout) => (
-				<Card key={workout.name}>
-					<CardHeader className="flex gap-2 pb-2">
-						<div className="flex flex-row items-center justify-between gap-2">
-							<CardTitle className="text-sm font-medium">
-								{workout.name}
-							</CardTitle>
-							<p className="text-sm text-muted-foreground">
-								Week {workout.week_number}
-							</p>
-						</div>
-						<p className="text-sm text-muted-foreground">{workout.date}</p>
-					</CardHeader>
-					<CardContent className="flex items-center justify-center min-h-[200px]">
-						<p className="text-sm font-medium">{workout.description}</p>
-					</CardContent>
-				</Card>
-			))}
+			{mergedWorkouts.map((workout) =>
+				"id" in workout ? (
+					<Link
+						href={`/workouts/${workout.id}`}
+						key={workout.name}
+						className="block"
+					>
+						<Card
+							className={cn(
+								"group transition-all hover:border-primary active:scale-[0.98]",
+								"hover:shadow-md active:shadow-sm",
+								"touch-none", // Prevents sticky hover on mobile
+								"@media (hover: none) { &:active { transform: scale(0.98); } }" // Ensures scale works on touch devices
+							)}
+						>
+							<CardHeader className="flex gap-2 pb-2">
+								<div className="flex flex-row items-center justify-between gap-2">
+									<CardTitle className="text-sm font-medium flex items-center gap-2">
+										{workout.name}
+										<ArrowUpRight className="h-4 w-4 transition-all opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+									</CardTitle>
+									<p className="text-sm text-muted-foreground">
+										Week {workout.week_number}
+									</p>
+								</div>
+								<p className="text-sm text-muted-foreground">{workout.date}</p>
+							</CardHeader>
+							<CardContent className="flex items-center justify-center min-h-[200px] relative">
+								<p className="text-sm font-medium text-center">
+									{workout.description || "Tap to view workout details"}
+								</p>
+								<div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+							</CardContent>
+						</Card>
+					</Link>
+				) : (
+					<Card key={workout.name}>
+						<CardHeader className="flex gap-2 pb-2">
+							<div className="flex flex-row items-center justify-between gap-2">
+								<CardTitle className="text-sm font-medium">
+									{workout.name}
+								</CardTitle>
+								<p className="text-sm text-muted-foreground">
+									Week {workout.week_number}
+								</p>
+							</div>
+							<p className="text-sm text-muted-foreground">{workout.date}</p>
+						</CardHeader>
+						<CardContent className="flex items-center justify-center min-h-[200px]">
+							<p className="text-sm font-medium">{workout.description}</p>
+						</CardContent>
+					</Card>
+				)
+			)}
 		</div>
 	);
 }
