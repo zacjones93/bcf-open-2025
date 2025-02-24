@@ -25,11 +25,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 import type { Database } from "@/types/database.types";
 
-type Division = Database["public"]["Enums"]["athlete_division"] | null | undefined;
+type Division =
+	| Database["public"]["Enums"]["athlete_division"]
+	| null
+	| undefined;
 
 interface Team {
 	id: string;
 	name: string;
+	captain?: {
+		name: string;
+	} | null;
 }
 
 const divisions: { value: Division; label: string }[] = [
@@ -72,7 +78,19 @@ export default function OnboardingPage() {
 		const fetchTeams = async () => {
 			const { data, error } = await supabase
 				.from("teams")
-				.select("id, name")
+				.select(
+					`
+					id, 
+					name,
+					athlete_teams!inner (
+						athlete:athlete_id (
+							name,
+							type
+						)
+					)
+				`
+				)
+				.eq("athlete_teams.is_active", true)
 				.order("name");
 
 			if (error) {
@@ -80,7 +98,16 @@ export default function OnboardingPage() {
 				return;
 			}
 
-			setTeams(data);
+			// Transform the data to include captain information
+			const teamsWithCaptains = data.map((team) => ({
+				id: team.id,
+				name: team.name,
+				captain:
+					team.athlete_teams.find((at) => at.athlete?.type === "captain")
+						?.athlete || null,
+			}));
+
+			setTeams(teamsWithCaptains);
 		};
 
 		checkProfile();
@@ -195,7 +222,9 @@ export default function OnboardingPage() {
 							<Label htmlFor="division">Division</Label>
 							<Select
 								value={division ?? undefined}
-								onValueChange={(value: string) => setDivision(value as Division)}
+								onValueChange={(value: string) =>
+									setDivision(value as Division)
+								}
 								required
 							>
 								<SelectTrigger>
@@ -222,7 +251,12 @@ export default function OnboardingPage() {
 								<SelectContent>
 									{teams.map((team) => (
 										<SelectItem key={team.id} value={team.id}>
-											{team.name}
+											<div className="flex flex-col gap-1">
+												<span>{team.name}</span>
+												<span className="text-xs text-muted-foreground">
+													Captain: {team.captain?.name || "No captain assigned"}
+												</span>
+											</div>
 										</SelectItem>
 									))}
 								</SelectContent>
