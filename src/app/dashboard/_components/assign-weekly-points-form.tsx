@@ -107,7 +107,6 @@ export function AssignWeeklyPointsForm() {
 					`
 					)
 					.eq("athlete_teams.team_id", captainTeamId)
-					.neq("id", currentAthlete.id) // Exclude the captain
 					.order("name");
 
 				if (athletesError) throw athletesError;

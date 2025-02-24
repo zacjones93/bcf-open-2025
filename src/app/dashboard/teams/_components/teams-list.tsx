@@ -162,7 +162,7 @@ export async function TeamsList() {
 								</span>
 							</CardTitle>
 							<CardDescription>
-								{team.athlete_teams.length} member
+								{team.athlete_teams.length + 1} member
 								{team.athlete_teams.length !== 1 ? "s" : ""}
 							</CardDescription>
 						</CardHeader>
