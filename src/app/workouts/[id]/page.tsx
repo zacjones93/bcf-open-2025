@@ -11,13 +11,18 @@ interface WorkoutPageProps {
 	};
 }
 
-export default async function WorkoutDetailsPage({ params }: WorkoutPageProps) {
+export default async function WorkoutDetailsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+	const pageID = (await params).id;
 	const supabase = await createServerClient();
 
 	const { data: workout } = await supabase
 		.from("workouts")
 		.select("*")
-		.eq("id", params.id)
+		.eq("id", pageID)
 		.single();
 
 	if (!workout) {
