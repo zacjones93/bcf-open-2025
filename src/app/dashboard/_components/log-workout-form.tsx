@@ -197,7 +197,7 @@ export function LogWorkoutForm() {
 			<Card>
 				<CardHeader>
 					<CardTitle>Log Workout Score</CardTitle>
-					<CardDescription>
+					<CardDescription className="max-w-[300px]">
 						Score logging is currently closed. Check back when the next workout
 						is released.
 					</CardDescription>

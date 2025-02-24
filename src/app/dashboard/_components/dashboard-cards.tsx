@@ -197,8 +197,12 @@ export async function DashboardCards() {
 			</Card>
 
 			<div className="space-y-4">
-				<h3 className="text-lg font-semibold">Workout Completion</h3>
-				<WorkoutCompletionCharts data={workoutCompletionData || []} />
+				{workoutCompletionData && workoutCompletionData.length > 0 && (
+					<>
+						<h3 className="text-lg font-semibold">Workout Completion</h3>
+						<WorkoutCompletionCharts data={workoutCompletionData || []} />
+					</>
+				)}
 			</div>
 
 			<div className="space-y-4">
