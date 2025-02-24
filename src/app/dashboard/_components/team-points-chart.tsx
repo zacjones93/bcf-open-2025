@@ -30,7 +30,7 @@ function getTeamColor(teamName: string): string {
 		.toLowerCase()
 		.trim();
 
-	if (normalizedName.includes("black")) return teamColors.black;
+	if (normalizedName.includes("grim reaper")) return teamColors.black;
 	if (normalizedName.includes("blue-tang clan")) return teamColors.blue;
 	if (normalizedName.includes("apsey-lute domination")) return teamColors.red;
 	return "#000";

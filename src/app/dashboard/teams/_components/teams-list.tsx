@@ -49,7 +49,7 @@ function getTeamLogo(teamName: string): string {
 		return "/images/blue-tang-clan.png";
 	if (normalizedName.includes("apsey-lute domination"))
 		return "/images/apsey-lute-domination.png";
-	if (normalizedName.includes("team black")) return "/images/team-black.png";
+	if (normalizedName.includes("grim reaper")) return "/images/grim-reaper.png";
 	return "";
 }
 
