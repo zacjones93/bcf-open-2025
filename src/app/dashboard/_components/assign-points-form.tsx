@@ -170,22 +170,6 @@ export function AssignPointsForm() {
 			if (!createdAssignments)
 				throw new Error("Failed to create point assignments");
 
-			// Create athlete points records for each assignment
-			const athletePoints = createdAssignments.map((assignment) => ({
-				athlete_id: assignment.assignee_id,
-				point_type_id: assignment.point_type_id,
-				workout_id: selectedWorkout || null,
-				points: assignment.points,
-				notes: notes || null,
-				point_assignment_id: assignment.id,
-			}));
-
-			const { error: pointsError } = await supabase
-				.from("athlete_points")
-				.insert(athletePoints);
-
-			if (pointsError) throw pointsError;
-
 			setSuccess(true);
 			setSelectedAthletes([]);
 			setSelectedPointTypes([]);
