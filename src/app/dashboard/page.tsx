@@ -20,15 +20,21 @@ import {
 	CardContent,
 } from "@/components/ui/card";
 
-import { getAthletesWithTeams } from "@/lib/supabase/queries/server/athletes";
+import {
+	getAthletesWithTeams,
+	getCurrentAthleteTeammates,
+	getCurrentAthleteWithTeam,
+} from "@/lib/supabase/queries/server/athletes";
 import { getAllPointTypes } from "@/lib/supabase/queries/server/points";
 import { getAllWorkouts } from "@/lib/supabase/queries/server/workouts";
-
 
 export default async function DashboardPage() {
 	const athletesWithTeamsLoader = getAthletesWithTeams();
 	const pointTypesLoader = getAllPointTypes();
 	const workoutsLoader = getAllWorkouts();
+
+	const currentAthleteTeammatesLoader = getCurrentAthleteTeammates();
+	const currentAthleteLoader = getCurrentAthleteWithTeam();
 
 	return (
 		<div className="min-h-screen bg-background p-8">
@@ -94,7 +100,12 @@ export default async function DashboardPage() {
 
 				<div className="space-y-4">
 					<Suspense fallback={<AssignPointsFormSkeleton />}>
-						<AssignWeeklyPointsForm />
+						<AssignWeeklyPointsForm
+							teammatesLoader={currentAthleteTeammatesLoader}
+							currentAthleteLoader={currentAthleteLoader}
+							pointTypesLoader={pointTypesLoader}
+							workoutsLoader={workoutsLoader}
+						/>
 					</Suspense>
 					<Suspense fallback={<AssignPointsFormSkeleton />}>
 						<AssignPointsForm
