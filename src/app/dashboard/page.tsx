@@ -18,10 +18,18 @@ import {
 	CardTitle,
 	CardDescription,
 	CardContent,
-	CardFooter,
 } from "@/components/ui/card";
 
-export default function DashboardPage() {
+import { getAthletesWithTeams } from "@/lib/supabase/queries/server/athletes";
+import { getAllPointTypes } from "@/lib/supabase/queries/server/points";
+import { getAllWorkouts } from "@/lib/supabase/queries/server/workouts";
+
+
+export default async function DashboardPage() {
+	const athletesWithTeamsLoader = getAthletesWithTeams();
+	const pointTypesLoader = getAllPointTypes();
+	const workoutsLoader = getAllWorkouts();
+
 	return (
 		<div className="min-h-screen bg-background p-8">
 			<div className="mx-auto max-w-7xl space-y-8">
@@ -50,27 +58,27 @@ export default function DashboardPage() {
 									<CardDescription className="max-w-[300px]">
 										You will need to follow the link below to log your official
 										open score on the CrossFit Games leaderboard. Clicking the
-										link will take you to the submision page. 
-										<p className="text-sm text-muted-foreground mt-2">Scores are due by
-									Monday!</p>
+										link will take you to the submision page.
+										<span className="text-sm text-muted-foreground mt-2">
+											Scores are due by Monday!
+										</span>
 									</CardDescription>
 								</CardHeader>
 								<CardContent className="flex justify-center">
 									<Button
-											asChild
-											className="bg-[#dbff43] text-black hover:bg-[#dbff43]/90 font-semibold w-fit mx-auto"
+										asChild
+										className="bg-[#dbff43] text-black hover:bg-[#dbff43]/90 font-semibold w-fit mx-auto"
+									>
+										<a
+											href="https://games.crossfit.com/manage-competition/athlete"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="flex items-center justify-center gap-2"
 										>
-											<a
-												href="https://games.crossfit.com/manage-competition/athlete"
-												target="_blank"
-												rel="noopener noreferrer"
-												className="flex items-center justify-center gap-2"
-											>
-												Log Score on CrossFit Games
-												<ArrowUpRight className="h-4 w-4" />
-											</a>
-										</Button>
-										
+											Log Score on CrossFit Games
+											<ArrowUpRight className="h-4 w-4" />
+										</a>
+									</Button>
 								</CardContent>
 							</Card>
 						</div>
@@ -89,7 +97,11 @@ export default function DashboardPage() {
 						<AssignWeeklyPointsForm />
 					</Suspense>
 					<Suspense fallback={<AssignPointsFormSkeleton />}>
-						<AssignPointsForm />
+						<AssignPointsForm
+							athletesWithTeamsLoader={athletesWithTeamsLoader}
+							pointTypesLoader={pointTypesLoader}
+							workoutsLoader={workoutsLoader}
+						/>
 					</Suspense>
 				</div>
 			</div>
