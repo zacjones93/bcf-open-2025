@@ -73,9 +73,7 @@ export default async function DashboardPage() {
 					</div>
 					<Suspense fallback={<LogWorkoutFormSkeleton />}>
 						<div className="flex flex-col sm:flex-row gap-4 w-full">
-							<LogWorkoutForm
-								initialData={await activeWorkoutWithScoreLoader}
-							/>
+							<LogWorkoutForm initialDataLoader={activeWorkoutWithScoreLoader} />
 							<Card className="max-w-2xl flex flex-col justify-between">
 								<CardHeader>
 									<CardTitle>Log Official CrossFit Open Score</CardTitle>

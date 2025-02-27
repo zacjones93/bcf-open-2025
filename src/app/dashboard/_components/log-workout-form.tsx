@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { Button } from "@/components/ui/button";
@@ -18,16 +18,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Workout, AthleteScore } from "@/lib/supabase/queries/server/workouts";
 
 interface LogWorkoutFormProps {
-	initialData: {
+	initialDataLoader: Promise<{
 		workout: Workout | null;
 		score: AthleteScore | null;
-	};
+	}>;
 }
 
-export function LogWorkoutForm({ initialData }: LogWorkoutFormProps) {
+export function LogWorkoutForm({ initialDataLoader }: LogWorkoutFormProps) {
+	const initialData = use(initialDataLoader);
 	const { user } = useSupabaseAuth();
-	const [score, setScore] = useState(initialData.score?.score || "");
-	const [notes, setNotes] = useState(initialData.score?.notes || "");
+	const [score, setScore] = useState(initialData?.score?.score || "");
+	const [notes, setNotes] = useState(initialData?.score?.notes || "");
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -35,7 +36,7 @@ export function LogWorkoutForm({ initialData }: LogWorkoutFormProps) {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!user || !initialData.workout) return;
+		if (!user || !initialData?.workout) return;
 
 		setLoading(true);
 		setError(null);
