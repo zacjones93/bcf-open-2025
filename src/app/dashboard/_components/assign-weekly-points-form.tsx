@@ -47,15 +47,27 @@ interface AssignWeeklyPointsFormProps {
 	currentAthleteLoader: Promise<AthleteWithTeams>;
 	pointTypesLoader: Promise<PointType[]>;
 	workoutsLoader: Promise<Workout[]>;
+	isAdmin: boolean;
 }
 
-export function AssignWeeklyPointsForm({ teammatesLoader, currentAthleteLoader, pointTypesLoader, workoutsLoader }: AssignWeeklyPointsFormProps) {
+export function AssignWeeklyPointsForm({
+	teammatesLoader,
+	currentAthleteLoader,
+	pointTypesLoader,
+	workoutsLoader,
+	isAdmin,
+}: AssignWeeklyPointsFormProps) {
 	const teammates = use(teammatesLoader);
 	const currentAthlete = use(currentAthleteLoader);
-	const isCaptain = currentAthlete.type === "captain" || currentAthlete.type === "admin";
+	const isCaptain =
+		currentAthlete.type === "captain" ||
+		currentAthlete.type === "admin" ||
+		isAdmin;
 
 	const pointTypes = use(pointTypesLoader);
-	const filteredPointTypes = pointTypes.filter((pt) => pt.category === "weekly");
+	const filteredPointTypes = pointTypes.filter(
+		(pt) => pt.category === "weekly"
+	);
 	const workouts = use(workoutsLoader);
 
 	const { user } = useSupabaseAuth();
@@ -65,7 +77,7 @@ export function AssignWeeklyPointsForm({ teammatesLoader, currentAthleteLoader, 
 	const [selectedPointTypes, setSelectedPointTypes] = useState<string[]>([]);
 	const [selectedWorkout, setSelectedWorkout] = useState("");
 	const [notes, setNotes] = useState("");
-	
+
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -116,8 +128,8 @@ export function AssignWeeklyPointsForm({ teammatesLoader, currentAthleteLoader, 
 				point_type_id: assignment.point_type_id,
 				workout_id: selectedWorkout || null,
 				points:
-					filteredPointTypes.find((pt) => pt.id === assignment.point_type_id)?.points ||
-					0,
+					filteredPointTypes.find((pt) => pt.id === assignment.point_type_id)
+						?.points || 0,
 				notes: notes || null,
 				point_assignment_id: assignment.id,
 			}));

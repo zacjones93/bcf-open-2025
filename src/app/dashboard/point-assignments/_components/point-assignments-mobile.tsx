@@ -1,19 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { useIsAdmin } from "@/hooks/use-is-admin";
 import type { PointAssignmentWithRelations } from "@/lib/supabase/queries/server/points";
 
 interface PointAssignmentsMobileProps {
 	assignments: PointAssignmentWithRelations[];
 	onDelete: (id: string) => void;
+	isAdmin: boolean;
 }
 
 export function PointAssignmentsMobile({
 	assignments,
 	onDelete,
+	isAdmin,
 }: PointAssignmentsMobileProps) {
-	const { isAdmin } = useIsAdmin();
-
 	return (
 		<div className="space-y-4">
 			{assignments.map((assignment) => (

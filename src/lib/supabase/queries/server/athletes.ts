@@ -88,3 +88,89 @@ export const getCurrentAthleteWithTeam = async () => {
 
   return currentAthlete;
 }
+
+export const isUserAdmin = async (userId?: string) => {
+  const supabase = await createServerClient();
+
+  if (!userId) {
+    const { data } = await supabase.auth.getUser();
+    userId = data?.user?.id;
+  }
+
+  if (!userId) {
+    return false;
+  }
+
+  const { data: athlete } = await supabase
+    .from('athletes')
+    .select('type')
+    .eq('user_id', userId)
+    .single();
+
+  return athlete?.type === 'admin';
+}
+
+export const getUserProfile = async (userId?: string) => {
+  const supabase = await createServerClient();
+
+  if (!userId) {
+    const { data } = await supabase.auth.getUser();
+    userId = data?.user?.id;
+  }
+
+  if (!userId) {
+    throw new Error("User not found");
+  }
+
+  const { data: profile } = await supabase
+    .from("athletes")
+    .select(
+      `
+      *,
+      athlete_teams!inner(
+        team:teams(name)
+      )
+    `
+    )
+    .eq("user_id", userId)
+    .single()
+    .throwOnError();
+
+  return profile;
+}
+
+export const getTeamsWithCaptains = async () => {
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("teams")
+    .select(
+      `
+      id, 
+      name,
+      athlete_teams!inner (
+        athlete:athlete_id (
+          name,
+          type
+        )
+      )
+    `
+    )
+    .eq("athlete_teams.is_active", true)
+    .order("name");
+
+  if (error) {
+    throw error;
+  }
+
+  // Transform the data to include captain information
+  const teamsWithCaptains = data.map((team) => ({
+    id: team.id,
+    name: team.name,
+    captain:
+      team.athlete_teams.find((at) => at.athlete?.type === "captain")
+        ?.athlete || null,
+  }));
+
+  return teamsWithCaptains;
+}

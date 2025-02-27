@@ -24,6 +24,7 @@ import {
 	getAthletesWithTeams,
 	getCurrentAthleteTeammates,
 	getCurrentAthleteWithTeam,
+	isUserAdmin,
 } from "@/lib/supabase/queries/server/athletes";
 import { getAllPointTypes } from "@/lib/supabase/queries/server/points";
 import {
@@ -49,6 +50,7 @@ export default async function DashboardPage() {
 	const currentAthleteTeammatesLoader = getCurrentAthleteTeammates();
 	const currentAthleteLoader = getCurrentAthleteWithTeam();
 	const activeWorkoutWithScoreLoader = getActiveWorkoutWithScore(user.id);
+	const isAdmin = await isUserAdmin(user.id);
 
 	return (
 		<div className="min-h-screen bg-background p-8">
@@ -121,6 +123,7 @@ export default async function DashboardPage() {
 							currentAthleteLoader={currentAthleteLoader}
 							pointTypesLoader={pointTypesLoader}
 							workoutsLoader={workoutsLoader}
+							isAdmin={isAdmin}
 						/>
 					</Suspense>
 					<Suspense fallback={<AssignPointsFormSkeleton />}>
@@ -128,6 +131,7 @@ export default async function DashboardPage() {
 							athletesWithTeamsLoader={athletesWithTeamsLoader}
 							pointTypesLoader={pointTypesLoader}
 							workoutsLoader={workoutsLoader}
+							isAdmin={isAdmin}
 						/>
 					</Suspense>
 				</div>

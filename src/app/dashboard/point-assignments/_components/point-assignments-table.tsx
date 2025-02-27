@@ -19,7 +19,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -35,12 +34,13 @@ type Filters = {
 
 interface PointAssignmentsTableProps {
 	initialData: PointAssignmentWithRelations[];
+	isAdmin: boolean;
 }
 
 export function PointAssignmentsTable({
 	initialData,
+	isAdmin,
 }: PointAssignmentsTableProps) {
-	const { isAdmin } = useIsAdmin();
 	const [assignments, setAssignments] =
 		useState<PointAssignmentWithRelations[]>(initialData);
 	const searchParams = useSearchParams();
@@ -149,6 +149,7 @@ export function PointAssignmentsTable({
 				<PointAssignmentsMobile
 					assignments={filteredAssignments}
 					onDelete={handleDelete}
+					isAdmin={isAdmin}
 				/>
 			</div>
 

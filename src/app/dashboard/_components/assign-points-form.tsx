@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, use } from "react";
-import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,23 +26,23 @@ import { type AthleteWithTeams } from "@/lib/supabase/queries/server/athletes";
 import { type PointType } from "@/lib/supabase/queries/server/points";
 import { type Workout } from "@/lib/supabase/queries/server/workouts";
 
-
 interface AssignPointsFormProps {
 	athletesWithTeamsLoader: Promise<AthleteWithTeams[]>;
 	pointTypesLoader: Promise<PointType[]>;
 	workoutsLoader: Promise<Workout[]>;
+	isAdmin: boolean;
 }
 
 export function AssignPointsForm({
 	athletesWithTeamsLoader,
 	pointTypesLoader,
 	workoutsLoader,
+	isAdmin,
 }: AssignPointsFormProps) {
 	const athletesWithTeams = use(athletesWithTeamsLoader);
 	const pointTypes = use(pointTypesLoader);
 	const workouts = use(workoutsLoader);
-	
-	const { isAdmin, loading: adminLoading } = useIsAdmin();
+
 	const { user } = useSupabaseAuth();
 	const [selectedAthletes, setSelectedAthletes] = useState<string[]>([]);
 	const [selectedPointTypes, setSelectedPointTypes] = useState<string[]>([]);
@@ -125,7 +124,6 @@ export function AssignPointsForm({
 		}
 	};
 
-	if (adminLoading) return null;
 	if (!isAdmin) return null;
 
 	return (
