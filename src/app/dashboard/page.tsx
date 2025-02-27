@@ -26,15 +26,29 @@ import {
 	getCurrentAthleteWithTeam,
 } from "@/lib/supabase/queries/server/athletes";
 import { getAllPointTypes } from "@/lib/supabase/queries/server/points";
-import { getAllWorkouts } from "@/lib/supabase/queries/server/workouts";
+import {
+	getAllWorkouts,
+	getActiveWorkoutWithScore,
+} from "@/lib/supabase/queries/server/workouts";
+import { cookies } from "next/headers";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default async function DashboardPage() {
+	const supabase = createServerComponentClient({ cookies });
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		throw new Error("User not found");
+	}
+
 	const athletesWithTeamsLoader = getAthletesWithTeams();
 	const pointTypesLoader = getAllPointTypes();
 	const workoutsLoader = getAllWorkouts();
-
 	const currentAthleteTeammatesLoader = getCurrentAthleteTeammates();
 	const currentAthleteLoader = getCurrentAthleteWithTeam();
+	const activeWorkoutWithScoreLoader = getActiveWorkoutWithScore(user.id);
 
 	return (
 		<div className="min-h-screen bg-background p-8">
@@ -57,7 +71,9 @@ export default async function DashboardPage() {
 					</div>
 					<Suspense fallback={<LogWorkoutFormSkeleton />}>
 						<div className="flex flex-col sm:flex-row gap-4 w-full">
-							<LogWorkoutForm />
+							<LogWorkoutForm
+								initialData={await activeWorkoutWithScoreLoader}
+							/>
 							<Card className="max-w-2xl flex flex-col justify-between">
 								<CardHeader>
 									<CardTitle>Log Official CrossFit Open Score</CardTitle>
