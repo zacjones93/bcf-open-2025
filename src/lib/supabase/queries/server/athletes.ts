@@ -29,6 +29,25 @@ export const getAthletesWithTeams = async () => {
   return data;
 }
 
+export const getUnassignedAthletes = async () => {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("athletes")
+    .select(
+      `
+        *,
+        athlete_teams (
+          team:teams(*)
+        )
+      `
+    )
+    .is("user_id", null)
+    .order("name")
+    .throwOnError();
+
+  return data;
+}
+
 export const getCurrentAthleteTeammates = async () => {
   const supabase = await createServerClient();
   const { data } = await supabase.auth.getUser();
@@ -62,7 +81,6 @@ export const getCurrentAthleteTeammates = async () => {
 
   return teammates;
 }
-
 
 export const getCurrentAthleteWithTeam = async () => {
   const supabase = await createServerClient();
