@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useState, use } from "react";
 import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,55 +18,32 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-} from "@/components/ui/command";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { type AthleteWithTeams } from "@/lib/supabase/queries/server/athletes";
+import { type PointType } from "@/lib/supabase/queries/server/points";
+import { type Workout } from "@/lib/supabase/queries/server/workouts";
 
-interface Athlete {
-	id: string;
-	name: string;
-	athlete_teams: Array<{
-		team: {
-			id: string;
-			name: string;
-		} | null;
-	}>;
+interface AssignPointsFormProps {
+	athletesWithTeamsLoader: Promise<AthleteWithTeams[]>;
+	pointTypesLoader: Promise<PointType[]>;
+	workoutsLoader: Promise<Workout[]>;
+	isAdmin: boolean;
 }
 
-interface PointType {
-	id: string;
-	name: string;
-	category: string;
-	points: number;
-}
+export function AssignPointsForm({
+	athletesWithTeamsLoader,
+	pointTypesLoader,
+	workoutsLoader,
+	isAdmin,
+}: AssignPointsFormProps) {
+	const athletesWithTeams = use(athletesWithTeamsLoader);
+	const pointTypes = use(pointTypesLoader);
+	const workouts = use(workoutsLoader);
 
-interface Workout {
-	id: string;
-	name: string;
-	week_number: number;
-}
-
-export function AssignPointsForm() {
-	const { isAdmin, loading: adminLoading } = useIsAdmin();
 	const { user } = useSupabaseAuth();
-	const [athletes, setAthletes] = useState<Athlete[]>([]);
-	const [pointTypes, setPointTypes] = useState<PointType[]>([]);
-	const [workouts, setWorkouts] = useState<Workout[]>([]);
 	const [selectedAthletes, setSelectedAthletes] = useState<string[]>([]);
 	const [selectedPointTypes, setSelectedPointTypes] = useState<string[]>([]);
 	const [selectedWorkout, setSelectedWorkout] = useState("");
@@ -78,46 +54,10 @@ export function AssignPointsForm() {
 	const [loading, setLoading] = useState(false);
 	const supabase = createClient();
 
-	useEffect(() => {
-		async function fetchData() {
-			const [athletesResponse, pointTypesResponse, workoutsResponse] =
-				await Promise.all([
-					supabase
-						.from("athletes")
-						.select(
-							`
-						id, 
-						name,
-						athlete_teams!inner (
-							team:teams(
-								id,
-								name
-							)
-						)
-					`
-						)
-						.order("name"),
-					supabase.from("point_types").select("*").order("category, name"),
-					supabase.from("workouts").select("*").order("week_number"),
-				]);
-
-			if (athletesResponse.error) setError("Failed to load athletes");
-			else setAthletes(athletesResponse.data);
-
-			if (pointTypesResponse.error) setError("Failed to load point types");
-			else setPointTypes(pointTypesResponse.data);
-
-			if (workoutsResponse.error) setError("Failed to load workouts");
-			else setWorkouts(workoutsResponse.data);
-		}
-
-		fetchData();
-	}, [supabase]);
-
 	// Get unique teams from athletes
 	const teams = Array.from(
 		new Set(
-			athletes
+			athletesWithTeams
 				.flatMap((athlete) =>
 					athlete.athlete_teams.map((at) => at.team?.name).filter(Boolean)
 				)
@@ -126,7 +66,7 @@ export function AssignPointsForm() {
 	).sort();
 
 	// Filter athletes by selected team
-	const filteredAthletes = athletes.filter((athlete) =>
+	const filteredAthletes = athletesWithTeams.filter((athlete) =>
 		selectedTeam === "all"
 			? true
 			: athlete.athlete_teams.some((at) => at.team?.name === selectedTeam)
@@ -184,7 +124,6 @@ export function AssignPointsForm() {
 		}
 	};
 
-	if (adminLoading) return null;
 	if (!isAdmin) return null;
 
 	return (

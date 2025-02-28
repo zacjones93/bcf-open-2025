@@ -18,22 +18,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
-import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
-
-type PointAssignment = {
-	id: string;
-	created_at: string;
-	assigner: { name: string } | null;
-	assignee: { name: string } | null;
-	point_type: { name: string; points: number } | null;
-	workout: { name: string } | null;
-	team: { name: string } | null;
-	notes: string | null;
-};
+import type { PointAssignmentWithRelations } from "@/lib/supabase/queries/server/points";
 
 type Filters = {
 	athlete: string;
@@ -43,12 +32,20 @@ type Filters = {
 	team: string;
 };
 
-export function PointAssignmentsTable() {
-	const { isAdmin } = useIsAdmin();
-	const [assignments, setAssignments] = useState<PointAssignment[]>([]);
-	const [loading, setLoading] = useState(true);
+interface PointAssignmentsTableProps {
+	initialData: PointAssignmentWithRelations[];
+	isAdmin: boolean;
+}
+
+export function PointAssignmentsTable({
+	initialData,
+	isAdmin,
+}: PointAssignmentsTableProps) {
+	const [assignments, setAssignments] =
+		useState<PointAssignmentWithRelations[]>(initialData);
 	const searchParams = useSearchParams();
 	const router = useRouter();
+	const supabase = createClientComponentClient<Database>();
 
 	// Initialize filters from URL params
 	const [filters, setFilters] = useState<Filters>({
@@ -58,8 +55,6 @@ export function PointAssignmentsTable() {
 		workout: searchParams.get("workout") || "all",
 		team: searchParams.get("team") || "all",
 	});
-
-	const supabase = createClientComponentClient<Database>();
 
 	// Update URL when filters change
 	const updateUrlParams = (newFilters: Filters) => {
@@ -81,74 +76,21 @@ export function PointAssignmentsTable() {
 		updateUrlParams(newFilters);
 	};
 
-	useEffect(() => {
-		fetchAssignments();
-	}, [supabase]);
-
-	async function fetchAssignments() {
-		const { data } = await supabase
-			.from("point_assignments")
-			.select(
-				`
-				id,
-				created_at,
-				notes,
-				assigner:athletes!point_assignments_assigner_id_fkey(name),
-				assignee:athletes!point_assignments_assignee_id_fkey(
-					name,
-					athlete_teams!inner (
-						team:teams(name)
-					)
-				),
-				point_type:point_types(name, points),
-				workout:workouts(name)
-			`
-			)
-			.order("created_at", { ascending: false });
-
-		if (data) {
-			const transformedData = data.map((assignment) => ({
-				...assignment,
-				team: assignment.assignee?.athlete_teams?.[0]?.team || null,
-			}));
-			setAssignments(transformedData as PointAssignment[]);
-		}
-		setLoading(false);
-	}
-
 	async function handleDelete(id: string) {
 		try {
 			// Delete the point assignment
-			const { data: deletedAssignment, error: assignmentError } = await supabase
+			const { error: assignmentError } = await supabase
 				.from("point_assignments")
 				.delete()
-				.eq("id", id)
-				.select()
-				.single();
+				.eq("id", id);
 
-			if (assignmentError) {
-				console.error("Error deleting point assignment:", assignmentError);
-				throw assignmentError;
-			}
+			if (assignmentError) throw assignmentError;
 
-			if (!deletedAssignment) {
-				console.error("No point assignment was deleted");
-				throw new Error("No point assignment was deleted");
-			}
-
-			// The athlete points record will be automatically deleted due to ON DELETE CASCADE
-			// Refresh the assignments list
-			await fetchAssignments();
+			// Update local state
+			setAssignments(assignments.filter((a) => a.id !== id));
 		} catch (error) {
 			console.error("Error in handleDelete:", error);
-			// You might want to show an error message to the user here
 		}
-	}
-
-	if (loading) {
-		return (
-			<div className="text-center py-4 text-muted-foreground">Loading...</div>
-		);
 	}
 
 	if (!assignments.length) {
@@ -207,6 +149,7 @@ export function PointAssignmentsTable() {
 				<PointAssignmentsMobile
 					assignments={filteredAssignments}
 					onDelete={handleDelete}
+					isAdmin={isAdmin}
 				/>
 			</div>
 

@@ -18,10 +18,40 @@ import {
 	CardTitle,
 	CardDescription,
 	CardContent,
-	CardFooter,
 } from "@/components/ui/card";
 
-export default function DashboardPage() {
+import {
+	getAthletesWithTeams,
+	getCurrentAthleteTeammates,
+	getCurrentAthleteWithTeam,
+	isUserAdmin,
+} from "@/lib/supabase/queries/server/athletes";
+import { getAllPointTypes } from "@/lib/supabase/queries/server/points";
+import {
+	getAllWorkouts,
+	getActiveWorkoutWithScore,
+} from "@/lib/supabase/queries/server/workouts";
+import { cookies } from "next/headers";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+
+export default async function DashboardPage() {
+	const supabase = createServerComponentClient({ cookies });
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		throw new Error("User not found");
+	}
+
+	const athletesWithTeamsLoader = getAthletesWithTeams();
+	const pointTypesLoader = getAllPointTypes();
+	const workoutsLoader = getAllWorkouts();
+	const currentAthleteTeammatesLoader = getCurrentAthleteTeammates();
+	const currentAthleteLoader = getCurrentAthleteWithTeam();
+	const activeWorkoutWithScoreLoader = getActiveWorkoutWithScore(user.id);
+	const isAdmin = await isUserAdmin(user.id);
+
 	return (
 		<div className="min-h-screen bg-background p-8">
 			<div className="mx-auto max-w-7xl space-y-8">
@@ -43,34 +73,34 @@ export default function DashboardPage() {
 					</div>
 					<Suspense fallback={<LogWorkoutFormSkeleton />}>
 						<div className="flex flex-col sm:flex-row gap-4 w-full">
-							<LogWorkoutForm />
+							<LogWorkoutForm initialDataLoader={activeWorkoutWithScoreLoader} />
 							<Card className="max-w-2xl flex flex-col justify-between">
 								<CardHeader>
 									<CardTitle>Log Official CrossFit Open Score</CardTitle>
 									<CardDescription className="max-w-[300px]">
 										You will need to follow the link below to log your official
 										open score on the CrossFit Games leaderboard. Clicking the
-										link will take you to the submision page. 
-										<p className="text-sm text-muted-foreground mt-2">Scores are due by
-									Monday!</p>
+										link will take you to the submision page.
+										<span className="text-sm text-muted-foreground mt-2">
+											Scores are due by Monday!
+										</span>
 									</CardDescription>
 								</CardHeader>
 								<CardContent className="flex justify-center">
 									<Button
-											asChild
-											className="bg-[#dbff43] text-black hover:bg-[#dbff43]/90 font-semibold w-fit mx-auto"
+										asChild
+										className="bg-[#dbff43] text-black hover:bg-[#dbff43]/90 font-semibold w-fit mx-auto"
+									>
+										<a
+											href="https://games.crossfit.com/manage-competition/athlete"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="flex items-center justify-center gap-2"
 										>
-											<a
-												href="https://games.crossfit.com/manage-competition/athlete"
-												target="_blank"
-												rel="noopener noreferrer"
-												className="flex items-center justify-center gap-2"
-											>
-												Log Score on CrossFit Games
-												<ArrowUpRight className="h-4 w-4" />
-											</a>
-										</Button>
-										
+											Log Score on CrossFit Games
+											<ArrowUpRight className="h-4 w-4" />
+										</a>
+									</Button>
 								</CardContent>
 							</Card>
 						</div>
@@ -86,10 +116,21 @@ export default function DashboardPage() {
 
 				<div className="space-y-4">
 					<Suspense fallback={<AssignPointsFormSkeleton />}>
-						<AssignWeeklyPointsForm />
+						<AssignWeeklyPointsForm
+							teammatesLoader={currentAthleteTeammatesLoader}
+							currentAthleteLoader={currentAthleteLoader}
+							pointTypesLoader={pointTypesLoader}
+							workoutsLoader={workoutsLoader}
+							isAdmin={isAdmin}
+						/>
 					</Suspense>
 					<Suspense fallback={<AssignPointsFormSkeleton />}>
-						<AssignPointsForm />
+						<AssignPointsForm
+							athletesWithTeamsLoader={athletesWithTeamsLoader}
+							pointTypesLoader={pointTypesLoader}
+							workoutsLoader={workoutsLoader}
+							isAdmin={isAdmin}
+						/>
 					</Suspense>
 				</div>
 			</div>

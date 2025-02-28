@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { Button } from "@/components/ui/button";
@@ -15,93 +15,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { Workout, AthleteScore } from "@/lib/supabase/queries/server/workouts";
 
-interface Workout {
-	id: string;
-	name: string;
-	week_number: number;
-	workout_date: string;
+interface LogWorkoutFormProps {
+	initialDataLoader: Promise<{
+		workout: Workout | null;
+		score: AthleteScore | null;
+	}>;
 }
 
-interface AthleteScore {
-	id: number;
-	score: string | null;
-	notes: string | null;
-	workout_id: string;
-	athlete_id: string;
-}
-
-export function LogWorkoutForm() {
+export function LogWorkoutForm({ initialDataLoader }: LogWorkoutFormProps) {
+	const initialData = use(initialDataLoader);
 	const { user } = useSupabaseAuth();
-	const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
-	const [existingScore, setExistingScore] = useState<AthleteScore | null>(null);
-	const [score, setScore] = useState("");
-	const [notes, setNotes] = useState("");
+	const [score, setScore] = useState(initialData?.score?.score || "");
+	const [notes, setNotes] = useState(initialData?.score?.notes || "");
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const supabase = createClient();
 
-	useEffect(() => {
-		async function fetchData() {
-			if (!user) return;
-
-			// Get current athlete ID
-			const { data: athlete } = await supabase
-				.from("athletes")
-				.select("id")
-				.eq("user_id", user.id)
-				.single();
-
-			if (!athlete) {
-				setError("Athlete profile not found");
-				return;
-			}
-
-			// Get active workout
-			const now = new Date();
-			const { data: workouts } = await supabase
-				.from("workouts")
-				.select("*")
-				.lte("workout_date", now.toISOString())
-				.order("workout_date", { ascending: false })
-				.limit(1);
-
-			const workout = workouts?.[0];
-			if (workout) {
-				const workoutDate = new Date(workout.workout_date);
-				const cutoffDate = new Date(workoutDate);
-				cutoffDate.setDate(cutoffDate.getDate() + 3);
-
-				if (now <= cutoffDate) {
-					setActiveWorkout(workout);
-
-					// Check for existing score
-					const { data: score } = await supabase
-						.from("athlete_score")
-						.select("*")
-						.eq("workout_id", workout.id)
-						.eq("athlete_id", athlete.id)
-						.single();
-
-					if (score) {
-						setExistingScore({
-							...score,
-							athlete_id: athlete.id,
-						});
-						setScore(score.score || "");
-						setNotes(score.notes || "");
-					}
-				}
-			}
-		}
-
-		fetchData();
-	}, [user, supabase]);
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!user || !activeWorkout) return;
+		if (!user || !initialData?.workout) return;
 
 		setLoading(true);
 		setError(null);
@@ -121,28 +56,25 @@ export function LogWorkoutForm() {
 					"Athlete profile not found. Please complete your profile setup first."
 				);
 
-			if (existingScore) {
-				// Update existing score
-				const { error: scoreError } = await supabase
-					.from("athlete_score")
-					.update({ score, notes: notes || null })
-					.eq("id", existingScore.id)
-					.eq("athlete_id", athlete.id);
+			// Use upsert pattern with on_conflict to handle both insert and update cases
+			const { error: scoreError } = await supabase.from("athlete_score").upsert(
+				{
+					workout_id: initialData.workout.id,
+					athlete_id: athlete.id,
+					score,
+					notes: notes || null,
+					...(initialData.score ? { id: initialData.score.id } : {}),
+				},
+				{
+					onConflict: "workout_id,athlete_id",
+					ignoreDuplicates: false,
+				}
+			);
 
-				if (scoreError) throw scoreError;
-			} else {
-				// Create new score
-				const { error: scoreError } = await supabase
-					.from("athlete_score")
-					.insert({
-						workout_id: activeWorkout.id,
-						athlete_id: athlete.id,
-						score,
-						notes: notes || null,
-					});
+			if (scoreError) throw scoreError;
 
-				if (scoreError) throw scoreError;
-
+			// Only create point assignment for new scores, not updates
+			if (!initialData.score) {
 				// Create point assignment record for workout completion
 				const { data: pointAssignment, error: assignmentError } = await supabase
 					.from("point_assignments")
@@ -150,7 +82,7 @@ export function LogWorkoutForm() {
 						assigner_id: athlete.id, // Self-assigned
 						assignee_id: athlete.id,
 						point_type_id: "99b7a5f1-c8aa-4282-ade9-cb530aa4cca4", // Workout Completion
-						workout_id: activeWorkout.id,
+						workout_id: initialData.workout.id,
 						points: 1,
 						notes: "Workout completion points via logged score",
 					})
@@ -160,31 +92,9 @@ export function LogWorkoutForm() {
 				if (assignmentError) throw assignmentError;
 				if (!pointAssignment)
 					throw new Error("Failed to create point assignment");
-
-				// Award completion points
-				const { error: pointsError } = await supabase
-					.from("athlete_points")
-					.insert({
-						athlete_id: athlete.id,
-						point_type_id: "99b7a5f1-c8aa-4282-ade9-cb530aa4cca4", // Workout Completion
-						workout_id: activeWorkout.id,
-						points: 1,
-						point_assignment_id: pointAssignment.id,
-					});
-
-				if (pointsError) throw pointsError;
 			}
 
 			setSuccess(true);
-			if (!existingScore) {
-				setExistingScore({
-					id: 0, // Will be updated on next fetch
-					score,
-					notes,
-					workout_id: activeWorkout.id,
-					athlete_id: athlete.id,
-				});
-			}
 		} catch (error) {
 			setError(error instanceof Error ? error.message : "Failed to save score");
 		} finally {
@@ -192,7 +102,7 @@ export function LogWorkoutForm() {
 		}
 	};
 
-	if (!activeWorkout) {
+	if (!initialData.workout) {
 		return (
 			<Card>
 				<CardHeader>
@@ -209,11 +119,13 @@ export function LogWorkoutForm() {
 	return (
 		<Card className="max-w-2xl">
 			<CardHeader>
-				<CardTitle>{existingScore ? "Update" : "Log"} Workout Score</CardTitle>
+				<CardTitle>
+					{initialData.score ? "Update" : "Log"} Workout Score
+				</CardTitle>
 				<CardDescription>
-					{existingScore
-						? `Update your score for ${activeWorkout.name}`
-						: `Log your score for ${activeWorkout.name}`}
+					{initialData.score
+						? `Update your score for ${initialData.workout.name}`
+						: `Log your score for ${initialData.workout.name}`}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -259,7 +171,7 @@ export function LogWorkoutForm() {
 					<Button type="submit" className="w-full" disabled={loading}>
 						{loading
 							? "Saving..."
-							: existingScore
+							: initialData.score
 							? "Update Score"
 							: "Submit Score"}
 					</Button>
