@@ -1,7 +1,18 @@
 import { Suspense } from "react";
 import { DivisionGroups } from "@/app/dashboard/_components/division-groups";
 
-export default function DivisionsPage() {
+interface DivisionsPageProps {
+	searchParams: Promise<{
+		workout?: string;
+	}>;
+}
+
+export default async function DivisionsPage({
+	searchParams,
+}: DivisionsPageProps) {
+	const resolvedSearchParams = await searchParams;
+	const selectedWorkoutId = resolvedSearchParams.workout;
+
 	return (
 		<div className="min-h-screen bg-background">
 			<div className="mx-auto max-w-7xl space-y-8 p-4 md:p-8">
@@ -16,7 +27,7 @@ export default function DivisionsPage() {
 							</div>
 						}
 					>
-						<DivisionGroups />
+						<DivisionGroups selectedWorkoutId={selectedWorkoutId} />
 					</Suspense>
 				</div>
 			</div>

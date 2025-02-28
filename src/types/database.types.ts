@@ -170,39 +170,39 @@ export type Database = {
             | Database["public"]["Enums"]["athlete_division"]
             | null
           created_at: string | null
-          crossfit_id: string
-          email: string
+          crossfit_id: string | null
+          email: string | null
           id: string
           name: string
           type: Database["public"]["Enums"]["athlete type"] | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           athlete_division?:
             | Database["public"]["Enums"]["athlete_division"]
             | null
           created_at?: string | null
-          crossfit_id: string
-          email: string
+          crossfit_id?: string | null
+          email?: string | null
           id?: string
           name: string
           type?: Database["public"]["Enums"]["athlete type"] | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           athlete_division?:
             | Database["public"]["Enums"]["athlete_division"]
             | null
           created_at?: string | null
-          crossfit_id?: string
-          email?: string
+          crossfit_id?: string | null
+          email?: string | null
           id?: string
           name?: string
           type?: Database["public"]["Enums"]["athlete type"] | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -326,6 +326,7 @@ export type Database = {
           details: string | null
           id: string
           name: string
+          scoring_type: Database["public"]["Enums"]["scoring_type"] | null
           standards_and_score_link: string | null
           updated_at: string | null
           week_number: number
@@ -337,6 +338,7 @@ export type Database = {
           details?: string | null
           id?: string
           name: string
+          scoring_type?: Database["public"]["Enums"]["scoring_type"] | null
           standards_and_score_link?: string | null
           updated_at?: string | null
           week_number: number
@@ -348,6 +350,7 @@ export type Database = {
           details?: string | null
           id?: string
           name?: string
+          scoring_type?: Database["public"]["Enums"]["scoring_type"] | null
           standards_and_score_link?: string | null
           updated_at?: string | null
           week_number?: number
@@ -371,6 +374,7 @@ export type Database = {
         | "scaled (f)"
         | "masters (55+ m)"
         | "masters (55+ f)"
+      scoring_type: "reps" | "time" | "load"
     }
     CompositeTypes: {
       [_ in never]: never

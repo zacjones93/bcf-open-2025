@@ -28,10 +28,10 @@ type Division = Database["public"]["Enums"]["athlete_division"];
 
 interface AthleteProfile {
 	id: string;
-	user_id: string;
+	user_id: string | null;
 	name: string;
-	email: string;
-	crossfit_id: string;
+	email: string | null;
+	crossfit_id: string | null;
 	athlete_division: Division | null;
 	type: Database["public"]["Enums"]["athlete type"] | null;
 	team_id?: string;
@@ -48,8 +48,8 @@ interface ProfileClientProps {
 
 export default function ProfileClient({ profile }: ProfileClientProps) {
 	const [name, setName] = useState(profile.name);
-	const [email, setEmail] = useState(profile.email);
-	const [crossfitId, setCrossfitId] = useState(profile.crossfit_id);
+	const [email, setEmail] = useState(profile.email || "");
+	const [crossfitId, setCrossfitId] = useState(profile.crossfit_id || "");
 	const [division, setDivision] = useState<Division | null>(
 		profile.athlete_division
 	);
@@ -77,7 +77,7 @@ export default function ProfileClient({ profile }: ProfileClientProps) {
 					crossfit_id: crossfitId,
 					athlete_division: division,
 				})
-				.eq("user_id", user?.id ?? "");
+				.eq("id", profile.id);
 
 			if (error) throw error;
 
