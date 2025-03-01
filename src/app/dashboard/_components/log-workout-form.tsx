@@ -78,13 +78,16 @@ export function LogWorkoutForm({ initialDataLoader }: LogWorkoutFormProps) {
 				// Create point assignment record for workout completion
 				const { data: pointAssignment, error: assignmentError } = await supabase
 					.from("point_assignments")
-					.insert({
+					.upsert({
 						assigner_id: athlete.id, // Self-assigned
 						assignee_id: athlete.id,
 						point_type_id: "99b7a5f1-c8aa-4282-ade9-cb530aa4cca4", // Workout Completion
 						workout_id: initialData.workout.id,
 						points: 1,
 						notes: "Workout completion points via logged score",
+					},{
+						onConflict: "workout_id,athlete_id,point_type_id",
+						ignoreDuplicates: false,
 					})
 					.select()
 					.single();

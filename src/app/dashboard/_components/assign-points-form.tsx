@@ -103,7 +103,10 @@ export function AssignPointsForm({
 			const { data: createdAssignments, error: assignmentError } =
 				await supabase
 					.from("point_assignments")
-					.insert(pointAssignments)
+					.upsert(pointAssignments, {
+						onConflict: "assignee_id,point_type_id,workout_id",
+						ignoreDuplicates: false,
+					})
 					.select();
 
 			if (assignmentError) throw assignmentError;

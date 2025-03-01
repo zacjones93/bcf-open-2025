@@ -115,30 +115,15 @@ export function AssignWeeklyPointsForm({
 
 			const { data: createdAssignments, error: insertError } = await supabase
 				.from("point_assignments")
-				.insert(pointAssignments)
+				.upsert(pointAssignments, {
+					onConflict: "assignee_id,point_type_id,workout_id",
+					ignoreDuplicates: false,
+				})
 				.select();
 
 			if (insertError) throw insertError;
 			if (!createdAssignments)
 				throw new Error("Failed to create point assignments");
-
-			// Create athlete points records for each assignment
-			const athletePoints = createdAssignments.map((assignment) => ({
-				athlete_id: assignment.assignee_id,
-				point_type_id: assignment.point_type_id,
-				workout_id: selectedWorkout || null,
-				points:
-					filteredPointTypes.find((pt) => pt.id === assignment.point_type_id)
-						?.points || 0,
-				notes: notes || null,
-				point_assignment_id: assignment.id,
-			}));
-
-			const { error: pointsError } = await supabase
-				.from("athlete_points")
-				.insert(athletePoints);
-
-			if (pointsError) throw pointsError;
 
 			setSuccess(true);
 			setSelectedAthletes([]);
