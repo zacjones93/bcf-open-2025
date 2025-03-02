@@ -18,22 +18,35 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function LoginPage() {
-	const [email, setEmail] = useState("");
+export default function UpdatePasswordClient() {
 	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [message, setMessage] = useState<string | null>(null);
 	const router = useRouter();
 	const supabase = createClient();
 
-	const handleLogin = async (e: React.FormEvent) => {
+	const handleUpdatePassword = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading(true);
 		setError(null);
 
+		// Validate passwords
+		if (password !== confirmPassword) {
+			setError("Passwords do not match");
+			setLoading(false);
+			return;
+		}
+
+		if (password.length < 6) {
+			setError("Password must be at least 6 characters");
+			setLoading(false);
+			return;
+		}
+
 		try {
-			const { error } = await supabase.auth.signInWithPassword({
-				email,
+			const { error } = await supabase.auth.updateUser({
 				password,
 			});
 
@@ -41,7 +54,12 @@ export default function LoginPage() {
 				throw error;
 			}
 
-			router.push("/dashboard");
+			setMessage("Password updated successfully! Redirecting to login...");
+
+			// Redirect after a short delay
+			setTimeout(() => {
+				router.push("/login");
+			}, 2000);
 		} catch (error) {
 			setError(error instanceof Error ? error.message : "An error occurred");
 		} finally {
@@ -50,100 +68,89 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div className="min-h-screen flex flex-col bg-white relative">
-			{/* Hero Section */}
-			<div className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-[url('/images/slider-banner.jpg')] bg-cover bg-center">
-				<div className="absolute inset-0 bg-black/50" />
-				<div className="relative z-10 flex flex-col items-center text-center">
-					<div className="bg-white h-fit w-fit px-4 pb-4 rounded-lg mb-4">
+		<div className="min-h-screen flex flex-col bg-white">
+			{/* Header */}
+			<div className="bg-white py-4 shadow-sm">
+				<div className="container mx-auto px-4">
+					<Link href="/">
 						<Image
 							src="/images/bcf-logo.png"
 							alt="Boise CrossFit"
-							width={300}
-							height={75}
-							className="mt-8"
+							width={200}
+							height={50}
+							className="h-12 w-auto"
 						/>
-					</div>
-					<h1 className="text-5xl md:text-7xl font-bold mb-4 text-white">
-						WE OPEN TOGETHER
-					</h1>
-					<p className="text-xl md:text-2xl mb-8 text-white">
-						Boise CrossFit 2025 Open
-					</p>
+					</Link>
 				</div>
 			</div>
 
-			{/* Login Form */}
-			<div className="flex-1 flex items-center justify-center px-4 bg-white">
-				<Card className="w-full max-w-md border-gray-200 -mt-12 z-10">
+			{/* Update Password Form */}
+			<div className="flex-1 flex items-center justify-center px-4 py-12">
+				<Card className="w-full max-w-md border-gray-200">
 					<CardHeader>
-						<CardTitle>Sign In</CardTitle>
+						<CardTitle>Update Password</CardTitle>
 						<CardDescription>
-							Sign in to track your Open performance
+							Create a new password for your account
 						</CardDescription>
 					</CardHeader>
-					<form onSubmit={handleLogin}>
+					<form onSubmit={handleUpdatePassword}>
 						<CardContent className="space-y-4">
 							{error && (
 								<Alert variant="destructive">
 									<AlertDescription>{error}</AlertDescription>
 								</Alert>
 							)}
+							{message && (
+								<Alert className="bg-green-50 text-green-800 border-green-200">
+									<AlertDescription>{message}</AlertDescription>
+								</Alert>
+							)}
 							<div className="space-y-2">
-								<Label htmlFor="email">Email</Label>
-								<Input
-									id="email"
-									type="email"
-									placeholder="Enter your email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									required
-									className="border-gray-200"
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor="password">Password</Label>
+								<Label htmlFor="password">New Password</Label>
 								<Input
 									id="password"
 									type="password"
-									placeholder="Enter your password"
+									placeholder="Enter new password"
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
 									required
 									className="border-gray-200"
 								/>
-								<div className="text-right">
-									<Link
-										href="/reset-password"
-										className="text-sm text-[#255af7] hover:text-[#255af7]/90 hover:underline"
-									>
-										Forgot password?
-									</Link>
-								</div>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="confirmPassword">Confirm Password</Label>
+								<Input
+									id="confirmPassword"
+									type="password"
+									placeholder="Confirm new password"
+									value={confirmPassword}
+									onChange={(e) => setConfirmPassword(e.target.value)}
+									required
+									className="border-gray-200"
+								/>
 							</div>
 						</CardContent>
 						<CardFooter className="flex flex-col space-y-4">
 							<Button
 								type="submit"
 								className="w-full bg-[#255af7] hover:bg-[#255af7]/90 text-white font-semibold"
-								disabled={loading}
+								disabled={loading || !!message}
 							>
-								{loading ? "Signing in..." : "Sign In"}
+								{loading ? "Updating..." : "Update Password"}
 							</Button>
 							<p className="text-sm text-gray-600 text-center">
-								Don&apos;t have an account?{" "}
+								Remember your password?{" "}
 								<Link
-									href="/register"
+									href="/login"
 									className="text-[#255af7] hover:text-[#255af7]/90 hover:underline font-medium"
 								>
-									Sign up
+									Sign in
 								</Link>
 							</p>
 						</CardFooter>
 					</form>
 				</Card>
 			</div>
-			<div className="min-h-[20vh]"></div>
 		</div>
 	);
 }

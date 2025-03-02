@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -18,30 +17,29 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
 	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
+	const [success, setSuccess] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const router = useRouter();
 	const supabase = createClient();
 
-	const handleLogin = async (e: React.FormEvent) => {
+	const handleResetPassword = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading(true);
 		setError(null);
+		setSuccess(false);
 
 		try {
-			const { error } = await supabase.auth.signInWithPassword({
-				email,
-				password,
+			const { error } = await supabase.auth.resetPasswordForEmail(email, {
+				redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/update-password`,
 			});
 
 			if (error) {
 				throw error;
 			}
 
-			router.push("/dashboard");
+			setSuccess(true);
 		} catch (error) {
 			setError(error instanceof Error ? error.message : "An error occurred");
 		} finally {
@@ -50,43 +48,44 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div className="min-h-screen flex flex-col bg-white relative">
-			{/* Hero Section */}
-			<div className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-[url('/images/slider-banner.jpg')] bg-cover bg-center">
-				<div className="absolute inset-0 bg-black/50" />
-				<div className="relative z-10 flex flex-col items-center text-center">
-					<div className="bg-white h-fit w-fit px-4 pb-4 rounded-lg mb-4">
+		<div className="min-h-screen flex flex-col bg-white">
+			{/* Header */}
+			<div className="bg-white py-4 shadow-sm">
+				<div className="container mx-auto px-4">
+					<Link href="/">
 						<Image
 							src="/images/bcf-logo.png"
 							alt="Boise CrossFit"
-							width={300}
-							height={75}
-							className="mt-8"
+							width={200}
+							height={50}
+							className="h-12 w-auto"
 						/>
-					</div>
-					<h1 className="text-5xl md:text-7xl font-bold mb-4 text-white">
-						WE OPEN TOGETHER
-					</h1>
-					<p className="text-xl md:text-2xl mb-8 text-white">
-						Boise CrossFit 2025 Open
-					</p>
+					</Link>
 				</div>
 			</div>
 
-			{/* Login Form */}
-			<div className="flex-1 flex items-center justify-center px-4 bg-white">
-				<Card className="w-full max-w-md border-gray-200 -mt-12 z-10">
+			{/* Reset Password Form */}
+			<div className="flex-1 flex items-center justify-center px-4 py-12">
+				<Card className="w-full max-w-md border-gray-200">
 					<CardHeader>
-						<CardTitle>Sign In</CardTitle>
+						<CardTitle>Reset Password</CardTitle>
 						<CardDescription>
-							Sign in to track your Open performance
+							Enter your email address and we'll send you a link to reset your
+							password
 						</CardDescription>
 					</CardHeader>
-					<form onSubmit={handleLogin}>
+					<form onSubmit={handleResetPassword}>
 						<CardContent className="space-y-4">
 							{error && (
 								<Alert variant="destructive">
 									<AlertDescription>{error}</AlertDescription>
+								</Alert>
+							)}
+							{success && (
+								<Alert className="bg-green-50 text-green-800 border-green-200">
+									<AlertDescription>
+										Password reset link sent! Check your email for instructions.
+									</AlertDescription>
 								</Alert>
 							)}
 							<div className="space-y-2">
@@ -101,49 +100,28 @@ export default function LoginPage() {
 									className="border-gray-200"
 								/>
 							</div>
-							<div className="space-y-2">
-								<Label htmlFor="password">Password</Label>
-								<Input
-									id="password"
-									type="password"
-									placeholder="Enter your password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									required
-									className="border-gray-200"
-								/>
-								<div className="text-right">
-									<Link
-										href="/reset-password"
-										className="text-sm text-[#255af7] hover:text-[#255af7]/90 hover:underline"
-									>
-										Forgot password?
-									</Link>
-								</div>
-							</div>
 						</CardContent>
 						<CardFooter className="flex flex-col space-y-4">
 							<Button
 								type="submit"
 								className="w-full bg-[#255af7] hover:bg-[#255af7]/90 text-white font-semibold"
-								disabled={loading}
+								disabled={loading || success}
 							>
-								{loading ? "Signing in..." : "Sign In"}
+								{loading ? "Sending..." : "Send Reset Link"}
 							</Button>
 							<p className="text-sm text-gray-600 text-center">
-								Don&apos;t have an account?{" "}
+								Remember your password?{" "}
 								<Link
-									href="/register"
+									href="/login"
 									className="text-[#255af7] hover:text-[#255af7]/90 hover:underline font-medium"
 								>
-									Sign up
+									Sign in
 								</Link>
 							</p>
 						</CardFooter>
 					</form>
 				</Card>
 			</div>
-			<div className="min-h-[20vh]"></div>
 		</div>
 	);
 }
