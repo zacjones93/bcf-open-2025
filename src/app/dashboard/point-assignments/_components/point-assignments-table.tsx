@@ -165,12 +165,14 @@ export function PointAssignmentsTable({
 							<SelectTrigger>
 								<SelectValue placeholder="Filter by Athlete" />
 							</SelectTrigger>
-							<SelectContent>
+							<SelectContent className="max-h-[300px] overflow-y-auto">
 								<SelectItem value="all">All Athletes</SelectItem>
 								{athletes.map((name) => (
+									
 									<SelectItem key={name} value={name || ""}>
 										{name}
 									</SelectItem>
+								
 								))}
 							</SelectContent>
 						</Select>
@@ -183,7 +185,7 @@ export function PointAssignmentsTable({
 							<SelectTrigger>
 								<SelectValue placeholder="Filter by Assigner" />
 							</SelectTrigger>
-							<SelectContent>
+							<SelectContent className="max-h-[300px] overflow-y-auto">
 								<SelectItem value="all">All Assigners</SelectItem>
 								{assigners.map((name) => (
 									<SelectItem key={name} value={name || ""}>
