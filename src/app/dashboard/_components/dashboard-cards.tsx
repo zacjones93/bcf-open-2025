@@ -25,6 +25,7 @@ interface WorkoutScore {
 		points: number;
 		point_type: {
 			category: string;
+			name: string;
 		};
 	}> | null;
 }
@@ -86,14 +87,26 @@ export async function DashboardCards() {
 		`);
 
 	// Get all athlete points
-	const { data: athletePoints } = await supabase.from("athlete_points").select(`
+	const { data: athletePoints } = (await supabase.from("athlete_points")
+		.select(`
 			athlete_id,
 			workout_id,
 			points,
 			point_type:point_types!inner (
-				category
+				category,
+				name
 			)
-		`);
+		`)) as {
+		data: Array<{
+			athlete_id: string | null;
+			workout_id: string | null;
+			points: number;
+			point_type: {
+				category: string;
+				name: string;
+			};
+		}> | null;
+	};
 
 	// Combine the data
 	const combinedScores = workoutScores?.map((score) => ({
@@ -145,7 +158,9 @@ export async function DashboardCards() {
 
 			// Count unique athletes who completed the workout
 			const completedAthletes = new Set(
-				teamWorkoutPoints?.map((point) => point.athlete_id)
+				teamWorkoutPoints
+					?.filter((point) => point?.point_type?.name === "Workout Completion")
+					?.map((point) => point.athlete_id)
 			).size;
 
 			return {
