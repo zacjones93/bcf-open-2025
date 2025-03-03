@@ -1,37 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Session cache duration in seconds (5 minutes)
-const SESSION_CACHE_DURATION = 5 * 60
-
 export async function updateSession(request: NextRequest) {
-
-    // Check for cached session in cookies
-    const cachedSessionStr = request.cookies.get('cached_session')?.value
-    const cachedTimestampStr = request.cookies.get('cached_session_timestamp')?.value
-  
-    let session = null
-    let shouldFetchNewSession = true
-  
-    // If we have a cached session, check if it's still fresh
-    if (cachedSessionStr && cachedTimestampStr) {
-      try {
-        const cachedTimestamp = parseInt(cachedTimestampStr, 10)
-        const currentTime = Math.floor(Date.now() / 1000)
-  
-        // Check if the cached session is still fresh (within cache duration)
-        if (currentTime - cachedTimestamp < SESSION_CACHE_DURATION) {
-          session = JSON.parse(cachedSessionStr)
-          shouldFetchNewSession = false
-        }
-      } catch (error) {
-        // If there's an error parsing the cached session, fetch a new one
-        console.error('Error parsing cached session:', error)
-      }
-    }
-
-  
-
 
   let supabaseResponse = NextResponse.next({
     request,
@@ -68,10 +38,29 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  if (user) {
+    // Skip athlete check for onboarding and auth-related paths
+    if (!request.nextUrl.pathname.startsWith('/onboarding') &&
+      !request.nextUrl.pathname.startsWith('/auth') &&
+      !request.nextUrl.pathname.startsWith('/login')) {
+      const { data: athlete } = await supabase
+        .from('athletes')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single()
+
+      if (!athlete) {
+        const redirectUrl = new URL('/onboarding', request.url)
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+  }
+
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !request.nextUrl.pathname.startsWith('/register')
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
