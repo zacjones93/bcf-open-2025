@@ -31,14 +31,10 @@ import {
 	getAllWorkouts,
 	getActiveWorkoutWithScore,
 } from "@/lib/supabase/queries/server/workouts";
-import { cookies } from "next/headers";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 
 export default async function DashboardPage() {
-	const supabase = createServerComponentClient({ cookies });
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	const user = await getCachedUser();
 
 	if (!user) {
 		throw new Error("User not found");
@@ -73,7 +69,9 @@ export default async function DashboardPage() {
 					</div>
 					<Suspense fallback={<LogWorkoutFormSkeleton />}>
 						<div className="flex flex-col sm:flex-row gap-4 w-full">
-							<LogWorkoutForm initialDataLoader={activeWorkoutWithScoreLoader} />
+							<LogWorkoutForm
+								initialDataLoader={activeWorkoutWithScoreLoader}
+							/>
 							<Card className="max-w-2xl flex flex-col justify-between">
 								<CardHeader>
 									<CardTitle>Log Official CrossFit Open Score</CardTitle>

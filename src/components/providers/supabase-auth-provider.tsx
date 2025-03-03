@@ -29,11 +29,38 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
 
 	useEffect(() => {
 		const getUser = async () => {
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
-			setUser(user);
-			setLoading(false);
+			try {
+				// First check if we have a cached session in cookies
+				const cachedSessionStr = document.cookie
+					.split("; ")
+					.find((row) => row.startsWith("cached_session="))
+					?.split("=")[1];
+
+				if (cachedSessionStr) {
+					try {
+						const cachedSession = JSON.parse(
+							decodeURIComponent(cachedSessionStr)
+						);
+						if (cachedSession?.user) {
+							setUser(cachedSession.user);
+							setLoading(false);
+							return;
+						}
+					} catch (error) {
+						console.error("Error parsing cached session:", error);
+					}
+				}
+
+				// If no cached session or error parsing it, fetch from Supabase
+				const {
+					data: { user },
+				} = await supabase.auth.getUser();
+				setUser(user);
+			} catch (error) {
+				console.error("Error getting user:", error);
+			} finally {
+				setLoading(false);
+			}
 		};
 
 		// Get initial user

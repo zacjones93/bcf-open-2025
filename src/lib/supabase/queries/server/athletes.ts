@@ -1,6 +1,7 @@
 import { User } from "@supabase/supabase-js";
 import { createServerClient } from "../../server";
 import { Tables } from "@/types/database.types";
+import { getCachedUser } from "../../cached-auth";
 
 export type Athlete = Tables<"athletes">;
 export type Team = Tables<"teams">;
@@ -49,44 +50,43 @@ export const getUnassignedAthletes = async () => {
 }
 
 export const getCurrentAthleteTeammates = async () => {
-  const supabase = await createServerClient();
-  const { data } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
-  if (!data?.user) {
+  if (!user) {
     throw new Error("User not found");
   }
 
   const currentAthlete = await getCurrentAthleteWithTeam();
 
-  const teamId = currentAthlete.athlete_teams[0]?.team?.id;
-
-  if (!teamId) {
-    throw new Error("Team not found");
+  if (!currentAthlete?.athlete_teams?.[0]?.team?.id) {
+    return [];
   }
 
-  const { data: teammates } = await supabase
+  const teamId = currentAthlete.athlete_teams[0].team.id;
+
+  const supabase = await createServerClient();
+  const { data } = await supabase
     .from("athletes")
     .select(
       `
-      *,
-      athlete_teams!inner (
-        team:teams!inner(*)
-      )
-    `
+        *,
+        athlete_teams!inner (
+          team:teams!inner(*)
+        )
+      `
     )
     .eq("athlete_teams.team_id", teamId)
     .order("name")
     .throwOnError();
 
-
-  return teammates;
+  return data || [];
 }
 
 export const getCurrentAthleteWithTeam = async () => {
   const supabase = await createServerClient();
-  const { data } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
-  if (!data?.user) {
+  if (!user) {
     throw new Error("User not found");
   }
 
@@ -100,7 +100,7 @@ export const getCurrentAthleteWithTeam = async () => {
       )
     `
     )
-    .eq("user_id", data.user.id)
+    .eq("user_id", user.id)
     .single()
     .throwOnError();
 
