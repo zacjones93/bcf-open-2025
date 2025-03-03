@@ -1,7 +1,7 @@
-import { User } from "@supabase/supabase-js";
-import { createServerClient } from "../../server";
+'use server'
+
+import { createClient } from "../../server";
 import { Tables } from "@/types/database.types";
-import { getCachedUser } from "../../cached-auth";
 
 export type Athlete = Tables<"athletes">;
 export type Team = Tables<"teams">;
@@ -12,8 +12,28 @@ export type AthleteWithTeams = Athlete & {
   }[];
 };
 
+export type TeamWithAthletes = {
+  id: string;
+  name: string;
+  athlete_teams: Array<{
+    athlete: Array<{
+      name: string;
+      type: string;
+    }>;
+  }>;
+};
+
+export type TeamWithCaptain = {
+  id: string;
+  name: string;
+  captain: {
+    name: string;
+    type: string;
+  } | null;
+};
+
 export const getAthletesWithTeams = async () => {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("athletes")
     .select(
@@ -31,7 +51,7 @@ export const getAthletesWithTeams = async () => {
 }
 
 export const getUnassignedAthletes = async () => {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("athletes")
     .select(
@@ -50,7 +70,8 @@ export const getUnassignedAthletes = async () => {
 }
 
 export const getCurrentAthleteTeammates = async () => {
-  const user = await getCachedUser();
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser()
 
   if (!user) {
     throw new Error("User not found");
@@ -64,7 +85,6 @@ export const getCurrentAthleteTeammates = async () => {
 
   const teamId = currentAthlete.athlete_teams[0].team.id;
 
-  const supabase = await createServerClient();
   const { data } = await supabase
     .from("athletes")
     .select(
@@ -83,8 +103,9 @@ export const getCurrentAthleteTeammates = async () => {
 }
 
 export const getCurrentAthleteWithTeam = async () => {
-  const supabase = await createServerClient();
-  const user = await getCachedUser();
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser()
+
 
   if (!user) {
     throw new Error("User not found");
@@ -108,11 +129,11 @@ export const getCurrentAthleteWithTeam = async () => {
 }
 
 export const isUserAdmin = async (userId?: string) => {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
 
 
   if (!userId) {
-    const user = await getCachedUser();
+    const { data: { user }, error } = await supabase.auth.getUser()
 
     if (!user) {
       throw new Error("User not found");
@@ -134,10 +155,10 @@ export const isUserAdmin = async (userId?: string) => {
 }
 
 export const getUserProfile = async (userId?: string) => {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
 
   if (!userId) {
-    const user = await getCachedUser();
+    const { data: { user }, error } = await supabase.auth.getUser()
 
     if (!user) {
       throw new Error("User not found");
@@ -166,8 +187,8 @@ export const getUserProfile = async (userId?: string) => {
   return profile;
 }
 
-export const getTeamsWithCaptains = async () => {
-  const supabase = await createServerClient();
+export const getTeamsWithCaptains = async (): Promise<TeamWithCaptain[]> => {
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("teams")
@@ -176,7 +197,7 @@ export const getTeamsWithCaptains = async () => {
       id, 
       name,
       athlete_teams!inner (
-        athlete:athlete_id (
+        athlete:athletes!inner (
           name,
           type
         )
@@ -191,12 +212,11 @@ export const getTeamsWithCaptains = async () => {
   }
 
   // Transform the data to include captain information
-  const teamsWithCaptains = data.map((team) => ({
+  const teamsWithCaptains = (data as TeamWithAthletes[]).map((team) => ({
     id: team.id,
     name: team.name,
     captain:
-      team.athlete_teams.find((at) => at.athlete?.type === "captain")
-        ?.athlete || null,
+      team.athlete_teams.find((at) => at.athlete[0]?.type === "captain")?.athlete[0] || null,
   }));
 
   return teamsWithCaptains;

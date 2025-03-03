@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import {
 	Card,
 	CardContent,
@@ -10,7 +10,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { WorkoutFilterClient } from "./workout-filter-client";
 import { ScoreInputDialog } from "./score-input-dialog";
 import type { Database } from "@/types/database.types";
-import { getCachedUser } from "@/lib/supabase/cached-auth";
 import { isUserAdmin } from "@/lib/supabase/queries/server/athletes";
 
 type Division = Database["public"]["Enums"]["athlete_division"];
@@ -23,20 +22,11 @@ type Workout = {
 	week_number: number;
 };
 
-type AthleteScore = {
-	id: number;
-	score: string | null;
-	workout_id: string;
-};
+type AthleteScore = Database["public"]["Tables"]["athlete_score"]["Row"];
 
-type Athlete = {
-	id: string;
-	name: string;
-	athlete_division: Division | null;
+type AthleteWithRelations = Database["public"]["Tables"]["athletes"]["Row"] & {
 	athlete_teams: Array<{
-		team: {
-			name: string;
-		} | null;
+		team: Database["public"]["Tables"]["teams"]["Row"] | null;
 	}>;
 	athlete_scores?: AthleteScore[];
 };
@@ -48,8 +38,16 @@ interface DivisionGroupsProps {
 export async function DivisionGroups({
 	selectedWorkoutId,
 }: DivisionGroupsProps) {
-	const supabase = await createServerClient();
-	const user = await getCachedUser();
+	const supabase = await createClient();
+	const {
+		data: { user },
+		error,
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		throw new Error("User not found");
+	}
+
 	const isAdmin = user ? await isUserAdmin(user.id) : false;
 
 	// Fetch all workouts for the filter
@@ -89,7 +87,7 @@ export async function DivisionGroups({
 	}
 
 	// Fetch athletes with their scores for the selected workout
-	const { data: athletes } = await supabase
+	const { data: athletes } = (await supabase
 		.from("athletes")
 		.select(
 			`
@@ -106,7 +104,7 @@ export async function DivisionGroups({
 			)
 		`
 		)
-		.order("name");
+		.order("name")) as { data: AthleteWithRelations[] | null };
 
 	if (!athletes?.length) {
 		return (
@@ -131,7 +129,7 @@ export async function DivisionGroups({
 		}
 		acc[key].push(athlete);
 		return acc;
-	}, {} as Record<string, Athlete[]>);
+	}, {} as Record<string, AthleteWithRelations[]>);
 
 	// Sort divisions by name, putting unassigned at the end
 	const sortedDivisions = Object.keys(athletesByDivision).sort((a, b) => {

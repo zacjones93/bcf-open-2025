@@ -24,24 +24,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 import type { Database } from "@/types/database.types";
 import type { User } from "@supabase/supabase-js";
-import type { AthleteWithTeams } from "@/lib/supabase/queries/server/athletes";
+import type { AthleteWithTeams, TeamWithCaptain } from "@/lib/supabase/queries/server/athletes";
 
 type Division =
 	| Database["public"]["Enums"]["athlete_division"]
 	| null
 	| undefined;
 
-interface Team {
-	id: string;
-	name: string;
-	captain?: {
-		name: string;
-	} | null;
-}
 
 interface OnboardingClientProps {
 	user: User;
-	teams: Team[];
+	teams: TeamWithCaptain[];
 	unassignedAthletes: AthleteWithTeams[];
 	claimAthleteProfile?: (
 		formData: FormData

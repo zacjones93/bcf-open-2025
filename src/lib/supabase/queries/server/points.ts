@@ -1,4 +1,6 @@
-import { createServerClient } from "../../server";
+'use server'
+
+import { createClient } from "../../server";
 import { Tables } from "@/types/database.types";
 
 export type PointType = Tables<"point_types">;
@@ -18,7 +20,7 @@ export interface PointAssignmentWithRelations extends PointAssignment {
 }
 
 export const getAllPointTypes = async (filters?: { category?: string }) => {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
   const query = supabase
     .from("point_types")
     .select("*")
@@ -33,7 +35,7 @@ export const getAllPointTypes = async (filters?: { category?: string }) => {
 };
 
 export const getPointAssignments = async () => {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("point_assignments")
     .select(

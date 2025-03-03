@@ -9,10 +9,11 @@ import {
 	CardDescription,
 } from "@/components/ui/card";
 import Image from "next/image";
-import { getCachedUser } from "@/lib/supabase/cached-auth";
+import { createClient } from "@/lib/supabase/server";
 
 const UpdatePasswordPage = async () => {
-	const user = await getCachedUser();
+	const supabase = await createClient();
+	const { data: { user }, error } = await supabase.auth.getUser()
 
 
 	if (!user) {

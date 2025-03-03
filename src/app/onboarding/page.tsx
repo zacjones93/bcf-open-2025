@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import {
 	getTeamsWithCaptains,
 	getUnassignedAthletes,
 } from "@/lib/supabase/queries/server/athletes";
 import OnboardingClient from "./_components/onboarding-client";
 import { Database } from "@/types/database.types";
-import { getCachedUser } from "@/lib/supabase/cached-auth";
 
 type Division =
 	| Database["public"]["Enums"]["athlete_division"]
@@ -14,9 +13,8 @@ type Division =
 	| undefined;
 
 export default async function OnboardingPage() {
-	const supabase = await createServerClient();
-	const user = await getCachedUser();
-
+	const supabase = await createClient();
+	const { data: { user }, error } = await supabase.auth.getUser()
 
 	if (!user) {
 		redirect("/login");
@@ -55,7 +53,7 @@ export default async function OnboardingPage() {
 			return { error: "Missing required fields" };
 		}
 
-		const supabase = await createServerClient();
+		const supabase = await createClient();
 
 		// Update the athlete profile with admin privileges (bypassing RLS)
 		const { error: updateError } = await supabase

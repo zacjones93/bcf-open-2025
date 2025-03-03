@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { getUserProfile } from "@/lib/supabase/queries/server/athletes";
 import ProfileClient from "./_components/profile-client";
-import { getCachedUser } from "@/lib/supabase/cached-auth";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function ProfilePage() {
-	const user = await getCachedUser();
+	const supabase = await createClient();
+	const { data: { user }, error } = await supabase.auth.getUser()
 
 	if (!user) {
 		throw new Error("User not found");

@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Database } from "@/types/database.types";
 import Link from "next/link";
@@ -29,7 +29,7 @@ const placeholderWorkouts = [
 ];
 
 export async function WorkoutCards() {
-	const supabase = await createServerClient();
+	const supabase = await createClient();
 
 	const { data: workouts } = await supabase
 		.from("workouts")

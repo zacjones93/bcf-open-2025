@@ -1,10 +1,5 @@
-import { createServerClient } from "@/lib/supabase/server";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/server";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TeamPointsChart } from "./team-points-chart";
 import { WorkoutCompletionCharts } from "./workout-completion-charts";
 import { TopAthletesCard } from "./top-athletes-card";
@@ -35,7 +30,7 @@ interface WorkoutScore {
 }
 
 export async function DashboardCards() {
-	const supabase = await createServerClient();
+	const supabase = await createClient();
 
 	// Get all teams with their active members
 	const { data: teamsData } = await supabase

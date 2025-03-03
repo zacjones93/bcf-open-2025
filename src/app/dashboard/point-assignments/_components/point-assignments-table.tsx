@@ -8,7 +8,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 import { PointAssignmentsMobile } from "./point-assignments-mobile";
 import {
@@ -45,7 +45,7 @@ export function PointAssignmentsTable({
 		useState<PointAssignmentWithRelations[]>(initialData);
 	const searchParams = useSearchParams();
 	const router = useRouter();
-	const supabase = createClientComponentClient<Database>();
+	const supabase = createClient();
 
 	// Initialize filters from URL params
 	const [filters, setFilters] = useState<Filters>({

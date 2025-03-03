@@ -1,5 +1,3 @@
-import { cookies } from "next/headers";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "@/types/database.types";
 import Image from "next/image";
 import {
@@ -10,6 +8,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { createClient } from "@/lib/supabase/server";
 
 type TeamResponse = Database["public"]["Tables"]["teams"]["Row"] & {
 	athlete_teams: Array<{
@@ -54,10 +53,7 @@ function getTeamLogo(teamName: string): string {
 }
 
 export async function TeamsList() {
-	const cookieStore = cookies();
-	const supabase = createServerComponentClient<Database>({
-		cookies: () => cookieStore,
-	});
+	const supabase = await createClient();
 
 	// Get all teams with their active members, captains, and points in a single query
 	const { data: teamsData } = await supabase

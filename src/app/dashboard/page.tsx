@@ -31,10 +31,11 @@ import {
 	getAllWorkouts,
 	getActiveWorkoutWithScore,
 } from "@/lib/supabase/queries/server/workouts";
-import { getCachedUser } from "@/lib/supabase/cached-auth";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
-	const user = await getCachedUser();
+	const supabase = await createClient();
+	const { data: { user }, error } = await supabase.auth.getUser()
 
 	if (!user) {
 		throw new Error("User not found");

@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,12 @@ interface WorkoutPageProps {
 }
 
 export default async function WorkoutDetailsPage({
-  params,
+	params,
 }: {
-  params: Promise<{ id: string }>
+	params: Promise<{ id: string }>;
 }) {
 	const pageID = (await params).id;
-	const supabase = await createServerClient();
+	const supabase = await createClient();
 
 	const { data: workout } = await supabase
 		.from("workouts")

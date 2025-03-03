@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import {
 	Card,
 	CardContent,
@@ -21,10 +21,13 @@ type AthleteWithPoints = {
 			name: string;
 		} | null;
 	}>;
+	athlete_points?: Array<{
+		points: number;
+	}>;
 };
 
 export async function TopAthletesCard() {
-	const supabase = await createServerClient();
+	const supabase = await createClient();
 
 	// Get all athletes with their points
 	const { data: athletes } = await supabase
@@ -42,7 +45,7 @@ export async function TopAthletesCard() {
 			)
 		`
 		)
-		.order("name");
+		.order("name") as { data: AthleteWithPoints[] | null };
 
 	if (!athletes) return null;
 

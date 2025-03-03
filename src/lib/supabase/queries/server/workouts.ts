@@ -1,11 +1,13 @@
-import { createServerClient } from "../../server";
+'use server'
+
+import { createClient } from "../../server";
 import { Tables } from "@/types/database.types";
 
 export type Workout = Tables<"workouts">;
 export type AthleteScore = Tables<"athlete_score">;
 
 export const getAllWorkouts = async () => {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("workouts")
     .select("*")
@@ -15,7 +17,7 @@ export const getAllWorkouts = async () => {
 };
 
 export const getActiveWorkoutWithScore = async (userId: string) => {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
 
   // Get current athlete ID
   const { data: athlete } = await supabase

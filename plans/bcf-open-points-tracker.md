@@ -238,7 +238,7 @@ CREATE TRIGGER update_athlete_points_updated_at
 2. Install dependencies:
 
    ```bash
-   pnpm add @supabase/supabase-js @supabase/auth-helpers-nextjs @tanstack/react-query zod @hookform/resolvers/zod react-hook-form
+   pnpm add @supabase/supabase-js @tanstack/react-query zod @hookform/resolvers/zod react-hook-form
    pnpm add -D @supabase/cli typescript @types/node @types/react @types/react-dom
    ```
 
