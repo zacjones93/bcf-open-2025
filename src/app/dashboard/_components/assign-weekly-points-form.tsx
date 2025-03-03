@@ -130,11 +130,15 @@ export function AssignWeeklyPointsForm({
 			setSelectedPointTypes([]);
 			setSelectedWorkout("");
 			setNotes("");
-		} catch (error) {
+		} catch (error: any) {
+			console.log({error});
 			console.error("Error assigning points:", error);
-			setError(
-				error instanceof Error ? error.message : "Failed to assign points"
-			);
+      if (error?.message === "new row violates row-level security policy (USING expression) for table \"point_assignments\"") {
+        setError("Failed to assign points, points already logged for some or all point types");
+      } else {
+        setError("Failed to assign points");
+      }
+
 		} finally {
 			setLoading(false);
 		}
