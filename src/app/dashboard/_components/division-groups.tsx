@@ -8,7 +8,10 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { WorkoutFilterClient } from "./workout-filter-client";
+import { ScoreInputDialog } from "./score-input-dialog";
 import type { Database } from "@/types/database.types";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
+import { isUserAdmin } from "@/lib/supabase/queries/server/athletes";
 
 type Division = Database["public"]["Enums"]["athlete_division"];
 type ScoringType = Database["public"]["Enums"]["scoring_type"];
@@ -46,6 +49,8 @@ export async function DivisionGroups({
 	selectedWorkoutId,
 }: DivisionGroupsProps) {
 	const supabase = await createServerClient();
+	const user = await getCachedUser();
+	const isAdmin = user ? await isUserAdmin(user.id) : false;
 
 	// Fetch all workouts for the filter
 	const { data: workouts } = await supabase
@@ -285,9 +290,15 @@ export async function DivisionGroups({
 													</p>
 												</div>
 											</div>
-											<div className="text-sm text-muted-foreground">
-												No score
-											</div>
+											{currentWorkoutId && isAdmin && (
+												<ScoreInputDialog
+													athleteId={athlete.id}
+													workoutId={currentWorkoutId}
+													athleteName={athlete.name}
+													scoringType={currentWorkout?.scoring_type || null}
+													adminId={user?.id || ""}
+												/>
+											)}
 										</div>
 									))}
 							</div>
