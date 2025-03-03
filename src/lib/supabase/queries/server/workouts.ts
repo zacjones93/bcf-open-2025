@@ -45,10 +45,10 @@ export const getActiveWorkoutWithScore = async (userId: string) => {
     return { workout: null, score: null };
   }
 
-  // Check if workout is still active (within 3 days)
+  // Check if workout is still active (within 4 days)
   const workoutDate = new Date(workout.workout_date);
   const cutoffDate = new Date(workoutDate);
-  cutoffDate.setDate(cutoffDate.getDate() + 3);
+  cutoffDate.setDate(cutoffDate.getDate() + 4);
 
   if (now > cutoffDate) {
     return { workout: null, score: null };
