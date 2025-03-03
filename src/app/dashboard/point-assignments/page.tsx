@@ -1,14 +1,14 @@
 import { getPointAssignments } from "@/lib/supabase/queries/server/points";
 import { isUserAdmin } from "@/lib/supabase/queries/server/athletes";
 import { PointAssignmentsTable } from "./_components/point-assignments-table";
-import { cookies } from "next/headers";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 
 export default async function PointAssignmentsPage() {
-	const supabase = createServerComponentClient({ cookies });
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	const user = await getCachedUser();
+
+	if (!user) {
+		throw new Error("User not found");
+	}
 
 	const assignments = await getPointAssignments();
 	const isAdmin = user ? await isUserAdmin(user.id) : false;

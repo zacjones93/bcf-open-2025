@@ -6,6 +6,7 @@ import {
 } from "@/lib/supabase/queries/server/athletes";
 import OnboardingClient from "./_components/onboarding-client";
 import { Database } from "@/types/database.types";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 
 type Division =
 	| Database["public"]["Enums"]["athlete_division"]
@@ -14,9 +15,10 @@ type Division =
 
 export default async function OnboardingPage() {
 	const supabase = await createServerClient();
-	const { data } = await supabase.auth.getUser();
+	const user = await getCachedUser();
 
-	if (!data.user) {
+
+	if (!user) {
 		redirect("/login");
 	}
 
@@ -24,7 +26,7 @@ export default async function OnboardingPage() {
 	const { data: athlete } = await supabase
 		.from("athletes")
 		.select("id")
-		.eq("user_id", data.user.id)
+		.eq("user_id", user.id)
 		.single();
 
 	if (athlete) {
@@ -119,7 +121,7 @@ export default async function OnboardingPage() {
 
 	return (
 		<OnboardingClient
-			user={data.user}
+			user={user}
 			teams={teams}
 			unassignedAthletes={unassignedAthletes || []}
 			claimAthleteProfile={claimAthleteProfile}

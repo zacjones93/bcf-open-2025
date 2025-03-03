@@ -1,4 +1,3 @@
-import { createServerClient } from "@/lib/supabase/server";
 import UpdatePasswordClient from "./_components/update-password-client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,12 +9,13 @@ import {
 	CardDescription,
 } from "@/components/ui/card";
 import Image from "next/image";
+import { getCachedUser } from "@/lib/supabase/cached-auth";
 
 const UpdatePasswordPage = async () => {
-	const supabase = await createServerClient();
-	const { data } = await supabase.auth.getUser();
+	const user = await getCachedUser();
 
-	if (!data.user) {
+
+	if (!user) {
 		return (
 			<div className="min-h-screen flex flex-col bg-white">
 				{/* Header */}

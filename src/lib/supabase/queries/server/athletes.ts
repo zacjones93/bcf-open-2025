@@ -110,9 +110,14 @@ export const getCurrentAthleteWithTeam = async () => {
 export const isUserAdmin = async (userId?: string) => {
   const supabase = await createServerClient();
 
+
   if (!userId) {
-    const { data } = await supabase.auth.getUser();
-    userId = data?.user?.id;
+    const user = await getCachedUser();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    userId = user.id;
   }
 
   if (!userId) {
@@ -132,8 +137,12 @@ export const getUserProfile = async (userId?: string) => {
   const supabase = await createServerClient();
 
   if (!userId) {
-    const { data } = await supabase.auth.getUser();
-    userId = data?.user?.id;
+    const user = await getCachedUser();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    userId = user.id;
   }
 
   if (!userId) {
