@@ -77,6 +77,7 @@ export type Database = {
       athlete_score: {
         Row: {
           athlete_id: string | null
+          athlete_point_id: string | null
           created_at: string
           id: number
           notes: string | null
@@ -86,6 +87,7 @@ export type Database = {
         }
         Insert: {
           athlete_id?: string | null
+          athlete_point_id?: string | null
           created_at?: string
           id?: number
           notes?: string | null
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           athlete_id?: string | null
+          athlete_point_id?: string | null
           created_at?: string
           id?: number
           notes?: string | null
@@ -108,6 +111,13 @@ export type Database = {
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_score_athlete_point_id_fkey"
+            columns: ["athlete_point_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_points"
             referencedColumns: ["id"]
           },
           {
