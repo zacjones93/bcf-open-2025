@@ -3,8 +3,8 @@
 import { useState } from "react";
 import {
 	createClient,
-	WORKOUT_COMPLETION_POINT_TYPE_ID,
 } from "@/lib/supabase/client";
+import { WORKOUT_COMPLETION_POINT_TYPE_ID } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,

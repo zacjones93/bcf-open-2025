@@ -19,6 +19,7 @@ import {
 	CardDescription,
 	CardContent,
 } from "@/components/ui/card";
+import { SpiritWinners } from "./_components/spirit-winners";
 
 import {
 	getAthletesWithTeams,
@@ -32,10 +33,14 @@ import {
 	getActiveWorkoutWithScore,
 } from "@/lib/supabase/queries/server/workouts";
 import { createClient } from "@/lib/supabase/server";
+import { getSpiritWinners } from "@/lib/supabase/queries/server/points";
 
 export default async function DashboardPage() {
 	const supabase = await createClient();
-	const { data: { user }, error } = await supabase.auth.getUser()
+	const {
+		data: { user },
+		error,
+	} = await supabase.auth.getUser();
 
 	if (!user) {
 		throw new Error("User not found");
@@ -48,6 +53,7 @@ export default async function DashboardPage() {
 	const currentAthleteLoader = getCurrentAthleteWithTeam();
 	const activeWorkoutWithScoreLoader = getActiveWorkoutWithScore(user.id);
 	const isAdmin = await isUserAdmin(user.id);
+	const spiritWinnersLoader = getSpiritWinners();
 
 	return (
 		<div className="min-h-screen bg-background p-8">
@@ -60,6 +66,11 @@ export default async function DashboardPage() {
 						<WorkoutCards />
 					</Suspense>
 				</div>
+
+				<Suspense fallback={<WorkoutCardsSkeleton />}>
+					<SpiritWinners winnersLoader={spiritWinnersLoader} />
+				</Suspense>
+
 				<div className="space-y-4">
 					<div className="space-y-4">
 						<div className="flex items-center justify-between">
