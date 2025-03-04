@@ -1,7 +1,10 @@
 "use client";
 
 import { use, useState } from "react";
-import { createClient, WORKOUT_COMPLETION_POINT_TYPE_ID } from "@/lib/supabase/client";
+import {
+	createClient,
+	WORKOUT_COMPLETION_POINT_TYPE_ID,
+} from "@/lib/supabase/client";
 import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +59,59 @@ export function LogWorkoutForm({ initialDataLoader }: LogWorkoutFormProps) {
 					"Athlete profile not found. Please complete your profile setup first."
 				);
 
+			const { data: pointAssignment, error: assignmentError } = await supabase
+				.from("point_assignments")
+				.upsert(
+					{
+						assigner_id: athlete.id, // Self-assigned
+						assignee_id: athlete.id,
+						point_type_id: WORKOUT_COMPLETION_POINT_TYPE_ID, // Workout Completion
+						workout_id: initialData.workout.id,
+						points: 1,
+						notes: "Workout completion points via logged score",
+					},
+					{
+						onConflict: "assignee_id,point_type_id,workout_id",
+						ignoreDuplicates: false,
+					}
+				)
+				.select()
+				.single();
+
+			if (assignmentError) throw assignmentError;
+			if (!pointAssignment)
+				throw new Error("Failed to create point assignment");
+
+			// Get or create athlete_point record
+			const { data: athletePoint, error: athletePointError } = await supabase
+				.from("athlete_points")
+				.upsert(
+					{
+						athlete_id: athlete.id,
+						point_type_id: WORKOUT_COMPLETION_POINT_TYPE_ID,
+						workout_id: initialData.workout.id,
+						points: 1,
+						notes: "admin logged score manually",
+						point_assignment_id: pointAssignment.id,
+					},
+					{
+						onConflict: "athlete_id,point_type_id,workout_id",
+						ignoreDuplicates: false,
+					}
+				)
+				.select("id")
+				.single();
+
+			if (athletePointError) {
+				console.error("Athlete Point Error Details:", {
+					code: athletePointError.code,
+					message: athletePointError.message,
+					details: athletePointError.details,
+					hint: athletePointError.hint,
+				});
+				throw athletePointError;
+			}
+
 			// Use upsert pattern with on_conflict to handle both insert and update cases
 			const { error: scoreError } = await supabase.from("athlete_score").upsert(
 				{
@@ -63,6 +119,7 @@ export function LogWorkoutForm({ initialDataLoader }: LogWorkoutFormProps) {
 					athlete_id: athlete.id,
 					score,
 					notes: notes || null,
+					athlete_point_id: athletePoint.id,
 					...(initialData.score ? { id: initialData.score.id } : {}),
 				},
 				{
@@ -72,30 +129,6 @@ export function LogWorkoutForm({ initialDataLoader }: LogWorkoutFormProps) {
 			);
 
 			if (scoreError) throw scoreError;
-
-			// Only create point assignment for new scores, not updates
-			if (!initialData.score) {
-				// Create point assignment record for workout completion
-				const { data: pointAssignment, error: assignmentError } = await supabase
-					.from("point_assignments")
-					.upsert({
-						assigner_id: athlete.id, // Self-assigned
-						assignee_id: athlete.id,
-						point_type_id: 	WORKOUT_COMPLETION_POINT_TYPE_ID, // Workout Completion
-						workout_id: initialData.workout.id,
-						points: 1,
-						notes: "Workout completion points via logged score",
-					},{
-						onConflict: "workout_id,athlete_id,point_type_id",
-						ignoreDuplicates: false,
-					})
-					.select()
-					.single();
-
-				if (assignmentError) throw assignmentError;
-				if (!pointAssignment)
-					throw new Error("Failed to create point assignment");
-			}
 
 			setSuccess(true);
 		} catch (error) {
