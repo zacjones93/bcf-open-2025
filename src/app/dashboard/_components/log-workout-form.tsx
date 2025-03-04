@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, WORKOUT_COMPLETION_POINT_TYPE_ID } from "@/lib/supabase/client";
 import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +81,7 @@ export function LogWorkoutForm({ initialDataLoader }: LogWorkoutFormProps) {
 					.upsert({
 						assigner_id: athlete.id, // Self-assigned
 						assignee_id: athlete.id,
-						point_type_id: "99b7a5f1-c8aa-4282-ade9-cb530aa4cca4", // Workout Completion
+						point_type_id: 	WORKOUT_COMPLETION_POINT_TYPE_ID, // Workout Completion
 						workout_id: initialData.workout.id,
 						points: 1,
 						notes: "Workout completion points via logged score",

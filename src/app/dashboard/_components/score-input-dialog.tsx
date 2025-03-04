@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import {
+	createClient,
+	WORKOUT_COMPLETION_POINT_TYPE_ID,
+} from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -58,15 +61,6 @@ export function ScoreInputDialog({
 
 				if (error) throw error;
 			} else {
-				// Insert new score
-				const { error } = await supabase.from("athlete_score").insert({
-					athlete_id: athleteId,
-					workout_id: workoutId,
-					score,
-				});
-
-				if (error) throw error;
-
 				// Get admin's athlete ID
 				const { data: adminAthlete, error: adminError } = await supabase
 					.from("athletes")
@@ -80,18 +74,77 @@ export function ScoreInputDialog({
 				// Create point assignment
 				const { data: pointAssignment, error: assignmentError } = await supabase
 					.from("point_assignments")
+					.upsert(
+						{
+							assigner_id: adminAthlete.id,
+							assignee_id: athleteId,
+							point_type_id: WORKOUT_COMPLETION_POINT_TYPE_ID,
+							workout_id: workoutId,
+							points: 1,
+							notes: "admin logged score manually",
+						},
+						{
+							onConflict: "assignee_id,point_type_id,workout_id",
+							ignoreDuplicates: false,
+						}
+					)
+					.select("id")
+					.single();
+
+				if (assignmentError) {
+					console.error("Assignment Error Details:", {
+						code: assignmentError.code,
+						message: assignmentError.message,
+						details: assignmentError.details,
+						hint: assignmentError.hint,
+					});
+					throw assignmentError;
+				}
+
+				// Get or create athlete_point record
+				const { data: athletePoint, error: athletePointError } = await supabase
+					.from("athlete_points")
+					.upsert(
+						{
+							athlete_id: athleteId,
+							point_type_id: WORKOUT_COMPLETION_POINT_TYPE_ID,
+							workout_id: workoutId,
+							points: 1,
+							notes: "admin logged score manually",
+							point_assignment_id: pointAssignment.id,
+						},
+						{
+							onConflict: "athlete_id,point_type_id,workout_id",
+							ignoreDuplicates: false,
+						}
+					)
+					.select("id")
+					.single();
+
+				if (athletePointError) {
+					console.error("Athlete Point Error Details:", {
+						code: athletePointError.code,
+						message: athletePointError.message,
+						details: athletePointError.details,
+						hint: athletePointError.hint,
+					});
+					throw athletePointError;
+				}
+
+				// Insert new score
+				const { data: newScore, error } = await supabase
+					.from("athlete_score")
 					.insert({
-						assigner_id: adminAthlete.id,
-						assignee_id: athleteId,
-						point_type_id: "99b7a5f1-c8aa-4282-ade9-cb530aa4cca4", // Workout Completion
+						athlete_id: athleteId,
 						workout_id: workoutId,
-						points: 1,
-						notes: "admin logged score manually",
+						score,
+						athlete_point_id: athletePoint.id,
 					})
 					.select()
 					.single();
 
-				if (assignmentError) throw assignmentError;
+				console.log({ newScore });
+				if (error) throw error;
 			}
 
 			toast.success(`Score for ${athleteName} has been saved successfully.`);

@@ -29,6 +29,22 @@ CREATE POLICY "Point assignments are insertable by authenticated users"
     TO authenticated
     WITH CHECK (true);
 
+-- Drop the previous policy if it exists
+DROP POLICY IF EXISTS "Point assignments are updatable by admins" ON point_assignments;
+
+CREATE POLICY "Point assignments are updatable by admins"
+    ON point_assignments FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1
+            FROM athletes
+            WHERE athletes.user_id = auth.uid()
+            AND athletes.type = 'admin'
+        )
+    )
+    WITH CHECK (true);
+
 -- Add trigger for updating timestamps
 CREATE TRIGGER update_point_assignments_updated_at
     BEFORE UPDATE ON point_assignments
