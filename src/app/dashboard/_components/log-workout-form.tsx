@@ -1,9 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import {
-	createClient,
-} from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { WORKOUT_COMPLETION_POINT_TYPE_ID } from "@/lib/constants";
 import { useSupabaseAuth } from "@/components/providers/supabase-auth-provider";
 import { Button } from "@/components/ui/button";
@@ -82,24 +80,11 @@ export function LogWorkoutForm({ initialDataLoader }: LogWorkoutFormProps) {
 			if (!pointAssignment)
 				throw new Error("Failed to create point assignment");
 
-			// Get or create athlete_point record
+			// Get the athlete_point record that was created by the trigger
 			const { data: athletePoint, error: athletePointError } = await supabase
 				.from("athlete_points")
-				.upsert(
-					{
-						athlete_id: athlete.id,
-						point_type_id: WORKOUT_COMPLETION_POINT_TYPE_ID,
-						workout_id: initialData.workout.id,
-						points: 1,
-						notes: "admin logged score manually",
-						point_assignment_id: pointAssignment.id,
-					},
-					{
-						onConflict: "athlete_id,point_type_id,workout_id",
-						ignoreDuplicates: false,
-					}
-				)
 				.select("id")
+				.eq("point_assignment_id", pointAssignment.id)
 				.single();
 
 			if (athletePointError) {
