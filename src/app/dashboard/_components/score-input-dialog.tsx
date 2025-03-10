@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-	createClient,
-} from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { WORKOUT_COMPLETION_POINT_TYPE_ID } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,12 +62,14 @@ export function ScoreInputDialog({
 				// Get admin's athlete ID
 				const { data: adminAthlete, error: adminError } = await supabase
 					.from("athletes")
-					.select("id")
+					.select("id, type")
 					.eq("user_id", adminId)
 					.single();
 
 				if (adminError) throw adminError;
 				if (!adminAthlete) throw new Error("Admin athlete profile not found");
+				if (adminAthlete.type !== "admin")
+					throw new Error("User is not an admin");
 
 				// Create point assignment
 				const { data: pointAssignment, error: assignmentError } = await supabase
@@ -101,24 +101,11 @@ export function ScoreInputDialog({
 					throw assignmentError;
 				}
 
-				// Get or create athlete_point record
+				// Get the athlete_point record that was created by the trigger
 				const { data: athletePoint, error: athletePointError } = await supabase
 					.from("athlete_points")
-					.upsert(
-						{
-							athlete_id: athleteId,
-							point_type_id: WORKOUT_COMPLETION_POINT_TYPE_ID,
-							workout_id: workoutId,
-							points: 1,
-							notes: "admin logged score manually",
-							point_assignment_id: pointAssignment.id,
-						},
-						{
-							onConflict: "athlete_id,point_type_id,workout_id",
-							ignoreDuplicates: false,
-						}
-					)
 					.select("id")
+					.eq("point_assignment_id", pointAssignment.id)
 					.single();
 
 				if (athletePointError) {
@@ -132,19 +119,16 @@ export function ScoreInputDialog({
 				}
 
 				// Insert new score
-				const { data: newScore, error } = await supabase
+				const { error: scoreError } = await supabase
 					.from("athlete_score")
 					.insert({
 						athlete_id: athleteId,
 						workout_id: workoutId,
 						score,
 						athlete_point_id: athletePoint.id,
-					})
-					.select()
-					.single();
+					});
 
-				console.log({ newScore });
-				if (error) throw error;
+				if (scoreError) throw scoreError;
 			}
 
 			toast.success(`Score for ${athleteName} has been saved successfully.`);
