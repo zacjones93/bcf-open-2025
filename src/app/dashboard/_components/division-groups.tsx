@@ -162,9 +162,27 @@ export async function DivisionGroups({
 			// Parse scores based on scoring type
 			if (currentWorkout?.scoring_type === "time") {
 				// For time: lower is better (convert to seconds for comparison)
-				const secondsA = parseTimeToSeconds(scoreA);
-				const secondsB = parseTimeToSeconds(scoreB);
-				return secondsA - secondsB;
+				// Times should be ranked higher than reps
+				const isRepsA = scoreA.toLowerCase().includes("reps");
+				const isRepsB = scoreB.toLowerCase().includes("reps");
+
+				if (isRepsA && isRepsB) {
+					// Both are reps, compare rep counts (higher reps first)
+					const repsA = parseInt(scoreA.split(" ")[0]);
+					const repsB = parseInt(scoreB.split(" ")[0]);
+					return repsB - repsA;
+				} else if (isRepsA) {
+					// A is reps, B is time - time should be higher
+					return 1;
+				} else if (isRepsB) {
+					// B is reps, A is time - time should be higher
+					return -1;
+				} else {
+					// Both are times, compare seconds (lower time first)
+					const secondsA = parseTimeToSeconds(scoreA);
+					const secondsB = parseTimeToSeconds(scoreB);
+					return secondsA - secondsB;
+				}
 			} else {
 				// For reps or load: higher is better
 				const numA = parseFloat(scoreA) || 0;
