@@ -54,7 +54,7 @@ export async function WorkoutCards() {
 	});
 
 	return (
-		<div className="grid gap-4 md:grid-cols-3">
+		<div className="grid gap-4 md:grid-cols-3 auto-rows-fr">
 			{mergedWorkouts.map((workout) =>
 				"id" in workout ? (
 					<Link
@@ -64,7 +64,7 @@ export async function WorkoutCards() {
 					>
 						<Card
 							className={cn(
-								"group transition-all hover:border-primary active:scale-[0.98]",
+								"group transition-all hover:border-primary active:scale-[0.98] h-full",
 								"hover:shadow-md active:shadow-sm",
 								"touch-none", // Prevents sticky hover on mobile
 								"@media (hover: none) { &:active { transform: scale(0.98); } }" // Ensures scale works on touch devices
@@ -86,7 +86,7 @@ export async function WorkoutCards() {
 								<p className="text-sm font-medium text-center whitespace-pre-wrap">
 									{workout.description || "Tap to view workout details"}
 								</p>
-								<div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+								<div className="absolute inset-0" />
 							</CardContent>
 						</Card>
 					</Link>
