@@ -30,7 +30,7 @@ export function SpiritWinners({ winnersLoader }: SpiritWinnersProps) {
 				Spirit of the Open Winners
 			</h2>
 			<div className="grid gap-4 md:grid-cols-3">
-				{winners.map((winner) => (
+				{winners.sort((a, b) => a.workout.week_number - b.workout.week_number).map((winner) => (
 					<Card key={`${winner.workout.week_number}-${winner.athlete.name}`}>
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
